@@ -1,0 +1,8 @@
+# Secrets — never commit these
+.env
+backend/.env
+nginx/certs/
+
+# OS
+.DS_Store
+Thumbs.db
