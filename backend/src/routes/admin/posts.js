@@ -8,9 +8,9 @@ const router = express.Router();
 router.use(protect); // All admin post routes are protected
 
 const postSchema = z.object({
-  title: z.string().min(3),
-  excerpt: z.string().min(10).max(300),
-  content: z.string().min(10),
+  title: z.string().min(1),
+  excerpt: z.string().min(1).max(300),
+  content: z.string().min(1),
   coverImage: z.string().optional(),
   tags: z.array(z.string()).optional(),
   status: z.enum(["draft", "published"]).optional(),

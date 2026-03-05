@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer id="iletisim" className="bg-gray-900 text-gray-300 py-16 px-6">
+    <footer id="iletisim" className=" bg-brand-600 text-gray-300 py-16 px-6">
       <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-12">
         {/* Brand */}
         <div>
@@ -26,7 +26,7 @@ export default function Footer() {
               <li key={l.href}>
                 <Link
                   href={l.href}
-                  className="hover:text-emerald-400 transition-colors"
+                  className="hover:text-brand-400 transition-colors"
                 >
                   {l.label}
                 </Link>
@@ -46,14 +46,14 @@ export default function Footer() {
           <div className="flex gap-4 mt-6">
             <a
               href="#"
-              className="hover:text-emerald-400 transition-colors"
+              className="hover:text-brand-400 transition-colors"
               aria-label="Instagram"
             >
               Instagram
             </a>
             <a
               href="#"
-              className="hover:text-emerald-400 transition-colors"
+              className="hover:text-brand-400 transition-colors"
               aria-label="YouTube"
             >
               YouTube
@@ -62,7 +62,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto border-t border-gray-800 mt-12 pt-8 text-center text-xs text-gray-500">
+      <div className="max-w-6xl mx-auto border-t border-white mt-12 pt-8 text-center text-xs text-gray-500">
         © {new Date().getFullYear()} Diyetisyen. Tüm hakları saklıdır.
       </div>
     </footer>

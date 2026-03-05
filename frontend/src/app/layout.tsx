@@ -1,11 +1,29 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Oswald, Cabin, Hind_Vadodara } from "next/font/google";
 import GsapProvider from "@/providers/GsapProvider";
 import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+});
+
+const oswald = Oswald({
+  variable: "--font-oswald",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const cabin = Cabin({
+  variable: "--font-cabin",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const hindVadodara = Hind_Vadodara({
+  variable: "--font-hind-vadodara",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -21,7 +39,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      <body className={`${geistSans.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${oswald.variable} ${cabin.variable} ${hindVadodara.variable} antialiased`}
+      >
         <GsapProvider>{children}</GsapProvider>
       </body>
     </html>

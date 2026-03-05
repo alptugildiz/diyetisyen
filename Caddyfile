@@ -1,0 +1,8 @@
+# Lokal geliştirme (Docker Compose): http://localhost
+# Production: domain adını aşağıya yaz (Caddy SSL'i otomatik alır)
+# Örnek: siteniz.com { ... }
+
+{$CADDY_HOST:localhost} {
+    # Tüm istekler Next.js'e — Next.js rewrites zaten /api/* → backend'e yönlendirir
+    reverse_proxy frontend:3000
+}

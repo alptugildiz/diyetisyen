@@ -1,8 +1,9 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
-// auth.ts always runs server-side — use Docker internal hostname
-const API_URL = "http://backend:5000";
+// auth.ts always runs server-side
+// Docker: BACKEND_URL=http://backend:5000 | Manuel: http://localhost:5000
+const API_URL = process.env.BACKEND_URL ?? "http://localhost:5000";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [

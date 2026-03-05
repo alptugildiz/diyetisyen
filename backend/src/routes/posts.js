@@ -28,6 +28,16 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET /api/posts/tags — unique tags from published posts
+router.get("/tags", async (_req, res) => {
+  try {
+    const tags = await Post.distinct("tags", { status: "published" });
+    res.json(tags.filter(Boolean).sort());
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // GET /api/posts/:slug
 router.get("/:slug", async (req, res) => {
   try {

@@ -17,17 +17,27 @@ export default async function SSSPage() {
   return (
     <>
       <Navbar />
-      <main className="pt-24 pb-16 min-h-screen bg-white px-6">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+
+      {/* Hero */}
+      <section className="grain relative overflow-hidden pt-32 pb-16 px-6 bg-linear-to-b from-brand-bg to-brand-bg">
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="font-cabin text-brand-600 font-semibold tracking-widest uppercase text-sm mb-4">
+            Yardım Merkezi
+          </p>
+          <h1 className="font-oswald text-5xl md:text-6xl font-bold text-gray-900 mb-4">
             Sıkça Sorulan Sorular
           </h1>
-          <p className="text-gray-500 mb-12">
+          <p className="font-hind-vadodara text-brand-600 text-lg max-w-xl mx-auto">
             Merak ettiğiniz soruların yanıtları burada.
           </p>
+        </div>
+      </section>
 
+      {/* İçerik */}
+      <main className="min-h-screen pb-24 px-6 bg-linear-to-b from-brand-bg to-brand-bg">
+        <div className="max-w-3xl mx-auto pt-12">
           {faqs.length === 0 ? (
-            <p className="text-gray-400 text-center py-24">
+            <p className="font-hind-vadodara text-brand-600 text-center py-24 text-lg">
               Henüz soru eklenmemiş.
             </p>
           ) : (
@@ -35,6 +45,7 @@ export default async function SSSPage() {
           )}
         </div>
       </main>
+
       <Footer />
     </>
   );

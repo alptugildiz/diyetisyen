@@ -5,6 +5,8 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useIsomorphicLayoutEffect from "@/hooks/useIsomorphicLayoutEffect";
 
+gsap.registerPlugin(ScrollTrigger);
+
 const services = [
   {
     emoji: "🥗",
@@ -35,13 +37,14 @@ export default function Services() {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         ".service-card",
-        { opacity: 0, y: 60 },
+        { opacity: 0, y: -80 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.7,
+          duration: 0.3,
           stagger: 0.15,
           ease: "power3.out",
+          clearProps: "transform",
           scrollTrigger: {
             trigger: sectionRef.current,
             start: "top 75%",
@@ -54,11 +57,17 @@ export default function Services() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="hizmetler" className="py-24 px-6 bg-white">
+    <section
+      ref={sectionRef}
+      id="hizmetler"
+      className="py-24 px-6 bg-linear-to-b from-brand-bg to-brand-50"
+    >
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Hizmetlerim</h2>
-          <p className="text-gray-500 text-lg max-w-xl mx-auto">
+          <h2 className="font-oswald text-4xl font-bold text-brand-600 mb-4">
+            Hizmetlerim
+          </h2>
+          <p className=" text-brand-600 text-lg max-w-xl mx-auto">
             Her bireyin ihtiyacı farklıdır. Size özel çözümler sunuyorum.
           </p>
         </div>
@@ -66,13 +75,15 @@ export default function Services() {
           {services.map((s) => (
             <div
               key={s.title}
-              className="service-card opacity-0 bg-emerald-50 rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300"
+              className="font-oswald service-card opacity-0 bg-brand-50 border border-brand-400 rounded-2xl p-8 shadow-xl hover:-translate-y-2 hover:shadow-2xl transition-all duration-300"
             >
               <div className="text-4xl mb-4">{s.emoji}</div>
-              <h3 className="font-bold text-gray-900 text-lg mb-2">
+              <h3 className="font-bold text-brand-600 text-lg mb-2">
                 {s.title}
               </h3>
-              <p className="text-gray-500 text-sm leading-relaxed">{s.desc}</p>
+              <p className="font-hind-vadodara text-brand-600 text-sm leading-relaxed">
+                {s.desc}
+              </p>
             </div>
           ))}
         </div>

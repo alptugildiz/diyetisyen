@@ -84,7 +84,7 @@ export default function AdminSSSPage() {
             resetForm();
             setShowForm(true);
           }}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+          className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
         >
           + Yeni Soru
         </button>
@@ -103,7 +103,7 @@ export default function AdminSSSPage() {
             <input
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
             />
           </div>
           <div>
@@ -114,7 +114,7 @@ export default function AdminSSSPage() {
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               rows={4}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 resize-none"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
             />
           </div>
           <div>
@@ -125,13 +125,13 @@ export default function AdminSSSPage() {
               type="number"
               value={order}
               onChange={(e) => setOrder(Number(e.target.value))}
-              className="w-24 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              className="w-24 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
             />
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 justify-end">
             <button
               onClick={handleSave}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-5 py-2 rounded-xl text-sm transition-colors"
+              className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-5 py-2 rounded-xl text-sm transition-colors"
             >
               Kaydet
             </button>
@@ -171,7 +171,7 @@ export default function AdminSSSPage() {
                   <td className="px-6 py-4 flex gap-3 justify-end">
                     <button
                       onClick={() => handleEdit(faq)}
-                      className="text-emerald-600 hover:underline font-medium"
+                      className="text-brand-600 hover:underline font-medium"
                     >
                       Düzenle
                     </button>

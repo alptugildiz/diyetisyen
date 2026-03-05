@@ -2,7 +2,7 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  --background: #ffffff;
+  --background: #EDE4C2;
   --foreground: #171717;
 }
 
@@ -11,10 +11,79 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Brand renk paleti */
+  --color-brand-bg: #EDE4C2;
+  --color-brand-50: #e9f5e8;
+  --color-brand-100: #cbe6ca;
+  --color-brand-200: #a5d4a3;
+  --color-brand-400: #3d8c39;
+  --color-brand-500: #254F22;
+  --color-brand-600: #1b3c19;
+
+  /* Fontlar */
+  --font-oswald: var(--font-oswald);
+  --font-cabin: var(--font-cabin);
+  --font-hind-vadodara: var(--font-hind-vadodara);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+button, [role="button"] {
+  cursor: pointer;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+html {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
+
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 0;
+  animation: grain-shift 8s steps(2) infinite;
+}
+
+@keyframes grain-shift {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-3%, 3%);
+  }
+
+  50% {
+    transform: translate(3%, -3%);
+  }
+
+  75% {
+    transform: translate(-3%, -3%);
+  }
+
+  100% {
+    transform: translate(3%, 3%);
+  }
 }

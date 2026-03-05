@@ -9,6 +9,7 @@ const postRoutes = require("./routes/posts");
 const faqRoutes = require("./routes/faqs");
 const adminPostRoutes = require("./routes/admin/posts");
 const adminFaqRoutes = require("./routes/admin/faqs");
+const adminUploadRoutes = require("./routes/admin/upload");
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use("/api/auth", authRoutes);
 // Admin (protected) routes
 app.use("/api/admin/posts", adminPostRoutes);
 app.use("/api/admin/faqs", adminFaqRoutes);
+app.use("/api/admin/upload", adminUploadRoutes);
 
 // 404
 app.use((_req, res) => res.status(404).json({ message: "Route not found" }));

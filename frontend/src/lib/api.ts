@@ -2,7 +2,10 @@ import type { Post, PostListResponse, Faq } from "@/types";
 
 // Server-side (SSR/SSG): Docker internal hostname
 // Client-side (browser): empty string → relative URL → nginx proxies /api/* to backend
-const API_URL = typeof window === "undefined" ? "http://backend:5000" : "";
+const API_URL =
+  typeof window === "undefined"
+    ? process.env.BACKEND_URL ?? "http://localhost:5000"
+    : "";
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, options);
@@ -13,7 +16,31 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// ─── Upload ────────────────────────────────────────────────────
+
+export async function adminUploadImage(
+  file: File,
+  token: string,
+): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append("image", file);
+  const res = await fetch("/api/admin/upload", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: "Yükleme başarısız" }));
+    throw new Error(error.message);
+  }
+  return res.json();
+}
+
 // ─── Public ────────────────────────────────────────────────────
+
+export function getTags(): Promise<string[]> {
+  return apiFetch<string[]>("/api/posts/tags");
+}
 
 export function getPosts(page = 1, tag?: string): Promise<PostListResponse> {
   const params = new URLSearchParams({ page: String(page) });

@@ -23,6 +23,8 @@ services:
       - diyet_network
     ports:
       - "5000:5000"
+    volumes:
+      - uploads_data:/app/uploads
 
   frontend:
     build:
@@ -33,6 +35,7 @@ services:
       NEXTAUTH_URL: ${NEXTAUTH_URL}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       AUTH_TRUST_HOST: "true"
+      BACKEND_URL: "http://backend:5000"
     depends_on:
       - backend
     networks:
@@ -40,24 +43,29 @@ services:
     ports:
       - "3000:3000"
 
-  nginx:
-    image: nginx:alpine
-    container_name: diyet_nginx
+  caddy:
+    image: caddy:2-alpine
+    container_name: diyet_caddy
     restart: unless-stopped
+    environment:
+      CADDY_HOST: ${CADDY_HOST:-localhost}
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./nginx/certs:/etc/letsencrypt:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - frontend
-      - backend
     networks:
       - diyet_network
 
 volumes:
   mongo_data:
+  uploads_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   diyet_network:

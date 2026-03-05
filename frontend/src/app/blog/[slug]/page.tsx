@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -31,34 +32,53 @@ export default async function BlogDetailPage({ params }: Props) {
   return (
     <>
       <Navbar />
-      <main className="pt-24 pb-16 min-h-screen bg-white px-6">
-        <article className="max-w-3xl mx-auto">
-          {post.coverImage && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={post.coverImage}
-              alt={post.title}
-              className="w-full h-72 object-cover rounded-2xl mb-8"
-            />
-          )}
 
-          <div className="flex flex-wrap gap-2 mb-4">
+      {/* Cover image hero veya düz başlık alanı */}
+      {post.coverImage ? (
+        <div className="relative w-full h-72 md:h-96 mt-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={post.coverImage}
+            alt={post.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-linear-to-t from-brand-bg/80 to-transparent" />
+        </div>
+      ) : (
+        <div className="grain relative overflow-hidden pt-32 pb-10 px-6 bg-linear-to-b from-brand-bg to-brand-50" />
+      )}
+
+      <main className="bg-linear-to-b from-brand-bg to-brand-50 px-6 pb-24">
+        <article className="max-w-3xl mx-auto pt-10">
+
+          {/* Geri dön */}
+          <Link
+            href="/blog"
+            className="font-cabin inline-flex items-center gap-2 text-brand-600 text-sm font-semibold mb-8 hover:text-brand-500 transition-colors"
+          >
+            ← Tüm Yazılar
+          </Link>
+
+          {/* Etiketler */}
+          <div className="flex flex-wrap justify-center gap-2 mb-4">
             {post.tags?.map((t) => (
               <span
                 key={t}
-                className="bg-emerald-100 text-emerald-700 text-xs font-medium px-2.5 py-1 rounded-full"
+                className="bg-brand-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full"
               >
                 {t}
               </span>
             ))}
           </div>
 
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+          {/* Başlık */}
+          <h1 className="font-oswald text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight text-center">
             {post.title}
           </h1>
 
+          {/* Tarih */}
           {post.publishedAt && (
-            <p className="text-gray-400 text-sm mb-8">
+            <p className="font-cabin text-brand-600/60 text-sm mb-10 font-medium text-center">
               {new Date(post.publishedAt).toLocaleDateString("tr-TR", {
                 day: "numeric",
                 month: "long",
@@ -67,12 +87,33 @@ export default async function BlogDetailPage({ params }: Props) {
             </p>
           )}
 
+          {/* Ayraç */}
+          <div className="w-16 h-1 rounded-full bg-brand-400 mb-10 mx-auto" />
+
+          {/* İçerik */}
           <div
-            className="prose prose-emerald max-w-none"
+            className="prose prose-lg max-w-none
+              prose-headings:font-oswald prose-headings:text-brand-600
+              prose-p:font-hind-vadodara prose-p:text-brand-600/90 prose-p:leading-relaxed
+              prose-a:text-brand-500 prose-a:no-underline hover:prose-a:underline
+              prose-strong:text-brand-600
+              prose-li:text-brand-600/90 prose-li:font-hind-vadodara
+              prose-blockquote:border-brand-400 prose-blockquote:text-brand-600/70"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
+
+          {/* Alt ayraç */}
+          <div className="mt-16 pt-8 border-t border-brand-200">
+            <Link
+              href="/blog"
+              className="font-cabin inline-flex items-center gap-2 text-brand-600 text-sm font-semibold hover:text-brand-500 transition-colors"
+            >
+              ← Tüm Yazılara Dön
+            </Link>
+          </div>
         </article>
       </main>
+
       <Footer />
     </>
   );

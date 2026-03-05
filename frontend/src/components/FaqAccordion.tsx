@@ -24,31 +24,51 @@ export default function FaqAccordion({ faqs }: { faqs: Faq[] }) {
 
   return (
     <div ref={listRef} className="space-y-3">
-      {faqs.map((faq) => (
-        <div
-          key={faq._id}
-          className="faq-item opacity-0 border border-gray-200 rounded-xl overflow-hidden"
-        >
-          <button
-            onClick={() => toggle(faq._id)}
-            className="w-full flex justify-between items-center px-6 py-5 text-left bg-white hover:bg-emerald-50 transition-colors"
+      {faqs.map((faq) => {
+        const isOpen = openId === faq._id;
+        return (
+          <div
+            key={faq._id}
+            className={`faq-item opacity-0 rounded-2xl overflow-hidden border transition-colors duration-200 ${
+              isOpen
+                ? "border-brand-400"
+                : "border-brand-200 bg-brand-200 hover:border-brand-400"
+            }`}
           >
-            <span className="font-semibold text-gray-900">{faq.question}</span>
-            <span
-              className={`text-emerald-500 text-xl font-bold transition-transform duration-200 ${
-                openId === faq._id ? "rotate-45" : ""
+            <button
+              onClick={() => toggle(faq._id)}
+              className={`w-full flex justify-between items-center px-6 py-5 text-left gap-4 transition-colors duration-200 ${
+                isOpen ? "bg-brand-500" : "bg-brand-200"
               }`}
             >
-              +
-            </span>
-          </button>
-          {openId === faq._id && (
-            <div className="px-6 pb-5 text-gray-600 leading-relaxed text-sm bg-white">
-              {faq.answer}
-            </div>
-          )}
-        </div>
-      ))}
+              <span
+                className={`font-oswald text-lg font-semibold leading-snug transition-colors duration-200 ${
+                  isOpen ? "text-white" : "text-brand-600"
+                }`}
+              >
+                {faq.question}
+              </span>
+              <span
+                className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-300 ${
+                  isOpen
+                    ? "bg-white text-brand-500 rotate-45"
+                    : "bg-brand-500 text-white rotate-0"
+                }`}
+              >
+                +
+              </span>
+            </button>
+            {isOpen && (
+              <div className="px-6 pb-6 bg-brand-bg">
+                <div className="w-10 h-0.5 bg-brand-400 mb-4 rounded-full mt-4" />
+                <p className="font-hind-vadodara text-brand-600/80 leading-relaxed text-base">
+                  {faq.answer}
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

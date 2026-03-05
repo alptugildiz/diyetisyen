@@ -40,7 +40,7 @@ export default function AdminBlogPage() {
         <h1 className="text-2xl font-bold text-gray-900">Blog Yazıları</h1>
         <Link
           href="/admin/blog/yeni"
-          className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+          className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
         >
           + Yeni Yazı
         </Link>
@@ -80,7 +80,7 @@ export default function AdminBlogPage() {
                     <span
                       className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         post.status === "published"
-                          ? "bg-emerald-100 text-emerald-700"
+                          ? "bg-brand-100 text-brand-600"
                           : "bg-gray-100 text-gray-500"
                       }`}
                     >
@@ -93,7 +93,7 @@ export default function AdminBlogPage() {
                   <td className="px-6 py-4 flex gap-3 justify-end">
                     <Link
                       href={`/admin/blog/${post._id}`}
-                      className="text-emerald-600 hover:underline font-medium"
+                      className="text-brand-600 hover:underline font-medium"
                     >
                       Düzenle
                     </Link>

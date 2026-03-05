@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 
+// Docker: BACKEND_URL=http://backend:5000 | Manuel: http://localhost:5000
+const BACKEND = process.env.BACKEND_URL ?? "http://localhost:5000";
+
 const nextConfig: NextConfig = {
   // Enable standalone output for Docker deployment
   output: "standalone",
@@ -18,23 +21,23 @@ const nextConfig: NextConfig = {
       afterFiles: [
         {
           source: "/api/posts/:path*",
-          destination: "http://backend:5000/api/posts/:path*",
+          destination: `${BACKEND}/api/posts/:path*`,
         },
         {
           source: "/api/faqs/:path*",
-          destination: "http://backend:5000/api/faqs/:path*",
+          destination: `${BACKEND}/api/faqs/:path*`,
         },
         {
           source: "/api/admin/:path*",
-          destination: "http://backend:5000/api/admin/:path*",
+          destination: `${BACKEND}/api/admin/:path*`,
         },
         {
           source: "/api/health",
-          destination: "http://backend:5000/api/health",
+          destination: `${BACKEND}/api/health`,
         },
         {
-          source: "/api/uploads/:path*",
-          destination: "http://backend:5000/uploads/:path*",
+          source: "/uploads/:path*",
+          destination: `${BACKEND}/uploads/:path*`,
         },
       ],
       fallback: [],

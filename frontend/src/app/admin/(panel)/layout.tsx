@@ -20,7 +20,7 @@ export default async function AdminLayout({
         {/* Sidebar */}
         <aside className="w-60 bg-white border-r border-gray-200 flex flex-col">
           <div className="p-6 border-b border-gray-200">
-            <p className="font-bold text-emerald-600 text-lg">Admin Panel</p>
+            <p className="font-bold text-brand-600 text-lg">Admin Panel</p>
             <p className="text-xs text-gray-400 mt-0.5">
               {session?.user?.email}
             </p>
@@ -35,7 +35,7 @@ export default async function AdminLayout({
                 <li key={l.href}>
                   <Link
                     href={l.href}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 text-sm font-medium transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-600 text-sm font-medium transition-colors"
                   >
                     {l.label}
                   </Link>
