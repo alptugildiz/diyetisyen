@@ -64,7 +64,7 @@ export default function Hero() {
             Kişiye özel beslenme programları ve birebir danışmanlık ile
             hedeflerinize ulaşın.
           </p>
-          <div className="hero-cta opacity-0 flex flex-row flex-wrap gap-3 justify-center lg:justify-start">
+          <div className="hero-cta opacity-0 flex flex-row flex-wrap gap-3 justify-center lg:justify-start relative top">
             <a
               href="#iletisim"
               className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-6 py-3 text-sm rounded-full transition-colors duration-200"

@@ -7,9 +7,17 @@ const API_URL =
     ? process.env.BACKEND_URL ?? "http://localhost:5000"
     : "";
 
+export class UnauthorizedError extends Error {
+  constructor() {
+    super("Unauthorized");
+    this.name = "UnauthorizedError";
+  }
+}
+
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, options);
   if (!res.ok) {
+    if (res.status === 401) throw new UnauthorizedError();
     const error = await res.json().catch(() => ({ message: "API error" }));
     throw new Error(error.message || `HTTP ${res.status}`);
   }
@@ -30,6 +38,10 @@ export async function adminUploadImage(
     body: formData,
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      window.location.replace("/admin/login");
+      throw new UnauthorizedError();
+    }
     const error = await res.json().catch(() => ({ message: "Yükleme başarısız" }));
     throw new Error(error.message);
   }
@@ -52,25 +64,36 @@ export function getPost(slug: string): Promise<Post> {
   return apiFetch<Post>(`/api/posts/${slug}`);
 }
 
+export function getRelatedPosts(slug: string): Promise<Post[]> {
+  return apiFetch<Post[]>(`/api/posts/${slug}/related`);
+}
+
 export function getFaqs(): Promise<Faq[]> {
   return apiFetch<Faq[]>("/api/faqs");
 }
 
 // ─── Admin ─────────────────────────────────────────────────────
 
-function adminFetch<T>(
+async function adminFetch<T>(
   path: string,
   token: string,
   options?: RequestInit,
 ): Promise<T> {
-  return apiFetch<T>(path, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...(options?.headers ?? {}),
-    },
-  });
+  try {
+    return await apiFetch<T>(path, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        ...(options?.headers ?? {}),
+      },
+    });
+  } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      window.location.replace("/admin/login");
+    }
+    throw err;
+  }
 }
 
 export function adminGetPosts(token: string) {

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getPost, getPosts } from "@/lib/api";
+import { getPost, getPosts, getRelatedPosts } from "@/lib/api";
 
 export const revalidate = 60;
 
@@ -28,6 +28,8 @@ export default async function BlogDetailPage({ params }: Props) {
   } catch {
     notFound();
   }
+
+  const related = await getRelatedPosts(slug).catch(() => []);
 
   return (
     <>
@@ -113,6 +115,52 @@ export default async function BlogDetailPage({ params }: Props) {
           </div>
         </article>
       </main>
+
+      {/* İlgili Yazılar */}
+      {related.length > 0 && (
+        <section className="px-6 pb-24 bg-linear-to-b from-brand-50 to-brand-bg">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center gap-4 mb-10">
+              <div className="h-px flex-1 bg-brand-200" />
+              <p className="font-oswald text-2xl font-bold text-brand-600">Bunları da sevebilirsiniz</p>
+              <div className="h-px flex-1 bg-brand-200" />
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {related.map((r) => (
+                <Link
+                  key={r._id}
+                  href={`/blog/${r.slug}`}
+                  className="group bg-brand-100 rounded-2xl overflow-hidden shadow-lg hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 flex flex-col"
+                >
+                  {r.coverImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={r.coverImage} alt={r.title} className="w-full h-44 object-cover" />
+                  ) : (
+                    <div className="w-full h-44 bg-brand-200 flex items-center justify-center">
+                      <span className="text-5xl">🥗</span>
+                    </div>
+                  )}
+                  <div className="p-5 flex flex-col flex-1">
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {r.tags?.map((t) => (
+                        <span key={t} className="bg-brand-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <h3 className="font-oswald font-bold text-brand-600 text-lg group-hover:text-brand-400 transition-colors line-clamp-2 leading-tight mb-1">
+                      {r.title}
+                    </h3>
+                    <p className="font-hind-vadodara text-brand-600/70 text-sm line-clamp-2 flex-1">
+                      {r.excerpt}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <Footer />
     </>

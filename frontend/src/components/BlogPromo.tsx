@@ -13,7 +13,7 @@ const topics = [
     num: "01",
     label: "Beslenme Makaleleri",
     sub: "Uzman gözüyle bilimsel rehberler",
-    gradient: "linear-gradient(to bottom right, #3d8c39, #1b3c19)",
+    gradient: "linear-gradient(to bottom right, #e8e4d9, #b6b7b1)",
     emoji: "🥗",
     href: "/blog?tag=beslenme",
   },
@@ -21,7 +21,7 @@ const topics = [
     num: "02",
     label: "Sık Sorulan Sorular",
     sub: "Aklınızdaki sorulara yanıt",
-    gradient: "linear-gradient(to bottom right, #a5d4a3, #3d8c39)",
+    gradient: "linear-gradient(to bottom right, #ceccc6, #886e57)",
     emoji: "❓",
     href: "/sss",
   },
@@ -29,7 +29,7 @@ const topics = [
     num: "03",
     label: "Tarif & Öneriler",
     sub: "Sağlıklı ve lezzetli tarifler",
-    gradient: "linear-gradient(to bottom right, #cbe6ca, #a5d4a3)",
+    gradient: "linear-gradient(to bottom right, #b6b7b1, #84815e)",
     emoji: "🍽️",
     href: "/blog?tag=diyet",
   },
@@ -107,8 +107,9 @@ export default function BlogPromo() {
     <section
       ref={sectionRef}
       id="blog-promo"
-      className="py-24 px-6 relative bg-linear-to-b from-brand-50 to-brand-bg overflow-hidden"
+      className="py-48 px-6 relative bg-linear-to-b from-brand-50 to-brand-bg overflow-hidden"
       onMouseMove={handleMouseMove}
+      onMouseLeave={handleLeave}
     >
       {/* Fare takipçi görsel - sadece desktop */}
       <div

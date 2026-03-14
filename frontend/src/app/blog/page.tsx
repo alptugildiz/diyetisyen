@@ -19,9 +19,7 @@ export default async function BlogPage({ searchParams }: Props) {
   ]);
 
   const { posts, totalPages } =
-    data.status === "fulfilled"
-      ? data.value
-      : { posts: [], totalPages: 1 };
+    data.status === "fulfilled" ? data.value : { posts: [], totalPages: 1 };
 
   const allTags = tagsResult.status === "fulfilled" ? tagsResult.value : [];
 
@@ -47,31 +45,32 @@ export default async function BlogPage({ searchParams }: Props) {
       {/* Kartlar */}
       <main className="min-h-screen pb-24 px-6 bg-linear-to-b from-brand-bg to-brand-bg">
         <div className="max-w-5xl mx-auto pt-16">
-
           {/* Tag Filter Bar */}
           {allTags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-12">
+            <div className="flex flex-wrap gap-2 mb-12 ">
               <Link
                 href="/blog"
-                className={`font-cabin text-sm font-semibold px-4 py-2 rounded-full transition-all duration-200 ${
+                className={`font-cabin text-sm font-semibold px-4 py-2 rounded-full transition-all duration-200  ${
                   !tag
-                    ? "bg-brand-500 text-white shadow-md"
-                    : "bg-brand-200 text-brand-600 hover:bg-brand-400 hover:text-white"
+                    ? "bg-brand-500 text-white shadow-md border border-transparent"
+                    : "bg-brand-50 text-brand-600 border border-brand-400 hover:bg-brand-400 hover:text-white"
                 }`}
               >
-                Tümü
+                <span className="relative top-0.5">Tümü</span>
               </Link>
               {allTags.map((t) => (
                 <Link
                   key={t}
-                  href={tag === t ? "/blog" : `/blog?tag=${encodeURIComponent(t)}`}
+                  href={
+                    tag === t ? "/blog" : `/blog?tag=${encodeURIComponent(t)}`
+                  }
                   className={`font-cabin text-sm font-semibold px-4 py-2 rounded-full transition-all duration-200 ${
                     tag === t
-                      ? "bg-brand-500 text-white shadow-md"
-                      : "bg-brand-200 text-brand-600 hover:bg-brand-400 hover:text-white"
+                      ? "bg-brand-500 text-white shadow-md border border-transparent"
+                      : "bg-brand-50 text-brand-600 border border-brand-400 hover:bg-brand-400 hover:text-white"
                   }`}
                 >
-                  {t}
+                  <span className="relative top-0.5">{t}</span>
                 </Link>
               ))}
             </div>
@@ -86,7 +85,7 @@ export default async function BlogPage({ searchParams }: Props) {
                 <Link
                   key={post._id}
                   href={`/blog/${post.slug}`}
-                  className="group bg-brand-100 rounded-2xl overflow-hidden shadow-lg hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 flex flex-col"
+                  className="group bg-brand-50 rounded-2xl overflow-hidden shadow-lg hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 flex flex-col"
                 >
                   {post.coverImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -145,7 +144,7 @@ export default async function BlogPage({ searchParams }: Props) {
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 ${
                     p === page
                       ? "bg-brand-500 text-white shadow-lg"
-                      : "bg-brand-200 text-brand-600 hover:bg-brand-400 hover:text-white"
+                      : "bg-brand-50 text-brand-600 border border-brand-400 hover:bg-brand-400 hover:text-white"
                   }`}
                 >
                   {p}

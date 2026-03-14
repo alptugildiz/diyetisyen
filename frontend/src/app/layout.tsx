@@ -1,29 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Oswald, Cabin, Hind_Vadodara } from "next/font/google";
+import localFont from "next/font/local";
 import GsapProvider from "@/providers/GsapProvider";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const oswald = Oswald({
-  variable: "--font-oswald",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const cabin = Cabin({
-  variable: "--font-cabin",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const hindVadodara = Hind_Vadodara({
-  variable: "--font-hind-vadodara",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const nexa = localFont({
+  variable: "--font-nexa",
+  src: [
+    { path: "../../public/font/NexaThin.otf",    weight: "100", style: "normal" },
+    { path: "../../public/font/NexaLight.otf",   weight: "300", style: "normal" },
+    { path: "../../public/font/NexaRegular.otf", weight: "400", style: "normal" },
+    { path: "../../public/font/NexaBold.otf",    weight: "700", style: "normal" },
+    { path: "../../public/font/NexaBlack.otf",   weight: "900", style: "normal" },
+  ],
 });
 
 export const metadata: Metadata = {
@@ -40,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body
-        className={`${geistSans.variable} ${oswald.variable} ${cabin.variable} ${hindVadodara.variable} antialiased`}
+        className={`${nexa.variable} antialiased`}
       >
         <GsapProvider>{children}</GsapProvider>
       </body>

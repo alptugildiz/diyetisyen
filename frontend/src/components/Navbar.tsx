@@ -2,18 +2,22 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 const links = [
-  { href: "/#hakkimda", label: "Hakkımda" },
-  { href: "/araclar", label: "Araçlar" },
-  { href: "/blog", label: "Blog" },
-  { href: "/sss", label: "SSS" },
-  { href: "/#iletisim", label: "İletişim" },
+  { href: "/#hakkimda", label: "Hakkımda", section: "hakkimda" },
+  { href: "/hesaplamalar", label: "Hesaplamalar", section: null },
+  { href: "/blog", label: "Blog", section: null },
+  { href: "/sss", label: "SSS", section: null },
+  { href: "/#iletisim", label: "İletişim", section: "iletisim" },
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [isRandevuHovered, setIsRandevuHovered] = useState(false);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [pillStyle, setPillStyle] = useState<{
     left: number;
     width: number;
@@ -31,29 +35,103 @@ export default function Navbar() {
     return { left: rect.left - listRect.left, width: rect.width };
   };
 
-  // pill'i mount'ta Randevu Al'ın üzerine konumlandır
+  // Aktif link indexini hesapla
+  const getActiveLinkIdx = (): number | null => {
+    // Pathname tabanlı eşleşme (/blog, /sss, /araclar)
+    for (let i = 0; i < links.length; i++) {
+      const link = links[i];
+      if (!link.section && link.href === pathname) return i;
+    }
+    // Ana sayfada section bazlı
+    if (pathname === "/") {
+      for (let i = 0; i < links.length; i++) {
+        if (links[i].section && links[i].section === activeSectionId) return i;
+      }
+    }
+    return null; // Randevu Al
+  };
+
+  const activeLinkIdx = getActiveLinkIdx();
+
+  // IntersectionObserver — sadece ana sayfada section takibi
   useEffect(() => {
-    const pos = getPillPos(randevuRef.current);
-    if (pos) setPillStyle({ ...pos, opacity: 1 });
+    if (pathname !== "/") {
+      setActiveSectionId(null);
+      return;
+    }
+    const sectionIds = links
+      .filter((l) => l.section)
+      .map((l) => l.section as string);
+
+    const activeSectionRef = { current: null as string | null };
+
+    const observers = sectionIds.map((id) => {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            activeSectionRef.current = id;
+            setActiveSectionId(id);
+          } else if (activeSectionRef.current === id) {
+            activeSectionRef.current = null;
+            setActiveSectionId(null);
+          }
+        },
+        { threshold: 0.3 }
+      );
+      obs.observe(el);
+      return obs;
+    });
+
+    return () => observers.forEach((obs) => obs?.disconnect());
+  }, [pathname]);
+
+  // Pill pozisyonunu aktif linke ya da Randevu Al'a ayarla
+  const moveToActive = () => {
+    if (activeLinkIdx !== null) {
+      const pos = getPillPos(linkRefs.current[activeLinkIdx]);
+      if (pos) setPillStyle({ ...pos, opacity: 1 });
+    } else {
+      const pos = getPillPos(randevuRef.current);
+      if (pos) setPillStyle({ ...pos, opacity: 1 });
+    }
+  };
+
+  // Pathname veya active section değişince pill güncelle
+  useEffect(() => {
+    moveToActive();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeLinkIdx]);
+
+  // İlk mount
+  useEffect(() => {
+    moveToActive();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLinkEnter = (i: number) => {
     setHoveredIdx(i);
+    setIsRandevuHovered(false);
     const pos = getPillPos(linkRefs.current[i]);
     if (pos) setPillStyle({ ...pos, opacity: 1 });
   };
 
   const handleRandevuEnter = () => {
     setHoveredIdx(null);
+    setIsRandevuHovered(true);
     const pos = getPillPos(randevuRef.current);
     if (pos) setPillStyle({ ...pos, opacity: 1 });
   };
 
   const handleListLeave = () => {
     setHoveredIdx(null);
-    const pos = getPillPos(randevuRef.current);
-    if (pos) setPillStyle({ ...pos, opacity: 1 });
+    setIsRandevuHovered(false);
+    moveToActive();
   };
+
+  const isActive = (i: number) => hoveredIdx === i || (hoveredIdx === null && !isRandevuHovered && activeLinkIdx === i);
+  const isRandevuActive = isRandevuHovered || (hoveredIdx === null && activeLinkIdx === null);
 
   return (
     <nav className="font-oswald fixed top-0 left-0 right-0 z-50 bg-white/40 backdrop-blur-sm border-b border-transparent">
@@ -68,7 +146,7 @@ export default function Navbar() {
         {/* Desktop */}
         <ul
           ref={listRef}
-          className="relative hidden md:flex items-center gap-2"
+          className="relative hidden md:flex items-center gap-2 top-0.5"
           onMouseLeave={handleListLeave}
         >
           {/* Sliding pill */}
@@ -94,8 +172,8 @@ export default function Navbar() {
             >
               <Link
                 href={l.href}
-                className={`relative z-10 block font-medium text-sm px-4 py-2 transition-colors duration-500 ${
-                  hoveredIdx === i ? "text-white" : "text-gray-600"
+                className={`relative top-0.5 z-10 block font-medium text-sm px-4 py-2 transition-colors duration-500 ${
+                  isActive(i) ? "text-white" : "text-gray-600"
                 }`}
               >
                 {l.label}
@@ -106,8 +184,8 @@ export default function Navbar() {
           <li ref={randevuRef} onMouseEnter={handleRandevuEnter}>
             <Link
               href="/#iletisim"
-              className={`relative z-10 block text-sm font-semibold px-5 py-2 rounded-full transition-colors duration-200 ${
-                hoveredIdx === null ? "text-white" : "text-gray-900"
+              className={`relative top-0.5 z-10 block text-sm font-semibold px-5 py-2 rounded-full transition-colors duration-200 ${
+                isRandevuActive ? "text-white" : "text-gray-900"
               }`}
             >
               Randevu Al
@@ -128,12 +206,16 @@ export default function Navbar() {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden bg-brand-bg/80 backdrop-blur-md border-t px-6 py-4 flex flex-col gap-4">
-          {links.map((l) => (
+          {links.map((l, i) => (
             <Link
               key={l.href}
               href={l.href}
               onClick={() => setOpen(false)}
-              className="text-brand-600 font-medium hover:text-brand-500 transition-colors duration-200"
+              className={`font-medium transition-colors duration-200 ${
+                activeLinkIdx === i
+                  ? "text-brand-500 font-semibold"
+                  : "text-brand-600 hover:text-brand-500"
+              }`}
             >
               {l.label}
             </Link>

@@ -79,8 +79,16 @@ export default function BlogEditorPage({ params }: Props) {
 
   const handleSave = async () => {
     setError("");
-    if (!title.trim() || !excerpt.trim()) {
-      setError("Başlık ve özet zorunludur.");
+    if (!title.trim()) {
+      setError("Başlık boş bırakılamaz.");
+      return;
+    }
+    if (!excerpt.trim()) {
+      setError("Özet boş bırakılamaz.");
+      return;
+    }
+    if (!editor?.getText().trim()) {
+      setError("İçerik boş bırakılamaz.");
       return;
     }
     setSaving(true);

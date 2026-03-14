@@ -2,8 +2,8 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  --background: #EDE4C2;
-  --foreground: #171717;
+  --background: #f0ece1;
+  --foreground: #725649;
 }
 
 @theme inline {
@@ -13,18 +13,18 @@
   --font-mono: var(--font-geist-mono);
 
   /* Brand renk paleti */
-  --color-brand-bg: #EDE4C2;
-  --color-brand-50: #e9f5e8;
-  --color-brand-100: #cbe6ca;
-  --color-brand-200: #a5d4a3;
-  --color-brand-400: #3d8c39;
-  --color-brand-500: #254F22;
-  --color-brand-600: #1b3c19;
+  --color-brand-bg: #f0ece1;
+  --color-brand-50: #e8e4d9;
+  --color-brand-100: #ceccc6;
+  --color-brand-200: #b6b7b1;
+  --color-brand-400: #886e57;
+  --color-brand-500: #84815e;
+  --color-brand-600: #725649;
 
   /* Fontlar */
-  --font-oswald: var(--font-oswald);
-  --font-cabin: var(--font-cabin);
-  --font-hind-vadodara: var(--font-hind-vadodara);
+  --font-oswald: var(--font-nexa);
+  --font-cabin: var(--font-nexa);
+  --font-hind-vadodara: var(--font-nexa);
 }
 
 body {
