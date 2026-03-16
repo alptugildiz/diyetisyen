@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/Navbar";
 
 type Gender = "erkek" | "kadin";
@@ -114,8 +114,8 @@ function belBoyColor(v: number): ColorKey {
 function belBoyYorum(v: number) {
   if (v < 0.4) return "Dikkat";
   if (v <= 0.5) return "Uygun";
-  if (v <= 0.6) return "Eylem Düşün";
-  return "Eyleme Geç";
+  if (v <= 0.6) return "Sınırda";
+  return "Riskli";
 }
 
 function belKalcaColor(v: number, g: Gender): ColorKey {
@@ -161,9 +161,9 @@ function RangeBar({
     blue: "bg-brand-500",
   };
   return (
-    <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+    <div className="relative h-2.5 bg-gray-200 rounded-full overflow-hidden">
       <div
-        className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${barColor[color]}`}
+        className={`absolute left-0 top-0 h-full rounded-full transition-all duration-700 ${barColor[color]}`}
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -194,26 +194,26 @@ function ResultCard({
   const c = COLORS[color];
   return (
     <div
-      className={`rounded-2xl overflow-hidden border ${c.border} shadow-sm ring-4 ${c.ring} flex flex-col`}
+      className={`h-full rounded-2xl overflow-hidden border ${c.border} shadow-md ring-4 ${c.ring} flex flex-col`}
     >
       {/* Renkli header */}
       <div
-        className={`${c.header} px-5 py-3.5 flex items-center justify-between shrink-0`}
+        className={`${c.header} px-5 py-4 flex items-center justify-between shrink-0`}
       >
-        <span className="text-white font-semibold text-sm tracking-wide">
+        <span className="text-white font-bold text-sm tracking-wide">
           {title}
         </span>
-        <span className="bg-white/30 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full border border-white/20">
+        <span className="bg-white/25 text-white text-xs font-bold px-3 py-1 rounded-full border border-white/30">
           {label}
         </span>
       </div>
       {/* İçerik */}
-      <div className={`${c.bg} px-5 pt-5 pb-5 bg-white flex-1`}>
+      <div className="bg-white px-5 pt-5 pb-5 flex-1 flex flex-col">
         <div className="flex items-end gap-2 mb-3">
           <p className="text-5xl font-bold text-gray-800 leading-none">
             {value}
           </p>
-          {unit && <p className="text-sm text-gray-500 mb-1">{unit}</p>}
+          {unit && <p className="text-sm text-gray-400 mb-1">{unit}</p>}
         </div>
         {rangeValue !== undefined &&
           rangeMin !== undefined &&
@@ -228,11 +228,96 @@ function ResultCard({
             </div>
           )}
         {children && (
-          <div className="border-t border-gray-100 pt-3 space-y-1.5 text-sm text-gray-600">
+          <div className="border-t border-gray-100 pt-3 mt-auto space-y-1.5 text-sm text-gray-600">
             {children}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function SelectDropdown({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition text-left flex items-center justify-between"
+      >
+        <span className="font-medium">{selected?.label}</span>
+        <svg
+          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 top-full mt-1.5 left-0 right-0 bg-white rounded-xl border border-brand-100 shadow-xl overflow-hidden">
+          {options.map((opt, i) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              className={`w-full px-4 py-3 text-sm text-left flex items-center justify-between transition-colors
+                ${
+                  opt.value === value
+                    ? "bg-brand-500 text-white font-semibold"
+                    : "text-gray-700 hover:bg-brand-50 hover:text-brand-600"
+                }
+                ${i < options.length - 1 ? "border-b border-gray-100" : ""}
+              `}
+            >
+              <span>{opt.label}</span>
+              {opt.value === value && (
+                <svg
+                  className="w-4 h-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -242,6 +327,7 @@ export default function HesaplamalarPage() {
   const [results, setResults] = useState<Results | null>(null);
   const [resultsKey, setResultsKey] = useState(0);
   const [hydrated, setHydrated] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
@@ -286,10 +372,18 @@ export default function HesaplamalarPage() {
       cinsiyet: form.cinsiyet,
       aktivite: form.aktivite,
     });
+
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
   }
 
   const inputCls =
     "w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition";
+
+  const aktiviteOptions = (Object.keys(AKTIVITE_LABELS) as Activity[]).map(
+    (k) => ({ value: k, label: AKTIVITE_LABELS[k] })
+  );
 
   return (
     <>
@@ -376,17 +470,11 @@ export default function HesaplamalarPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Aktivite Düzeyi
               </label>
-              <select
+              <SelectDropdown
                 value={form.aktivite}
-                onChange={(e) => set("aktivite", e.target.value as Activity)}
-                className={inputCls}
-              >
-                {(Object.keys(AKTIVITE_LABELS) as Activity[]).map((k) => (
-                  <option key={k} value={k}>
-                    {AKTIVITE_LABELS[k]}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => set("aktivite", v)}
+                options={aktiviteOptions}
+              />
             </div>
 
             <button
@@ -399,19 +487,18 @@ export default function HesaplamalarPage() {
 
           {/* Sonuçlar */}
           {results && (
-            <div key={resultsKey}>
+            <div key={resultsKey} ref={resultsRef} className="scroll-mt-6">
               <style>{`
                 @keyframes fadeInUp {
-                  from { opacity: 0; transform: translateY(20px); }
+                  from { opacity: 0; transform: translateY(24px); }
                   to   { opacity: 1; transform: translateY(0);    }
                 }
-                .card-anim { opacity: 0; animation: fadeInUp 0.45s ease forwards; }
+                .card-anim { opacity: 0; animation: fadeInUp 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
               `}</style>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div
-                  className="card-anim h-full"
-                  style={{ animationDelay: "0ms" }}
-                >
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-stretch">
+                {/* Bel / Boy */}
+                <div className="card-anim flex flex-col" style={{ animationDelay: "0ms" }}>
                   <ResultCard
                     title="Bel / Boy İndeksi"
                     color={belBoyColor(results.belBoy)}
@@ -421,49 +508,24 @@ export default function HesaplamalarPage() {
                     rangeMin={0.3}
                     rangeMax={0.7}
                   >
-                    <div className="grid grid-cols-4 gap-1 text-center text-xs">
+                    <div className="grid grid-cols-4 gap-1.5 text-center">
                       {[
-                        {
-                          range: "<0.40",
-                          yorum: "Dikkat",
-                          color: "text-amber-600",
-                        },
-                        {
-                          range: "0.40–0.50",
-                          yorum: "Uygun",
-                          color: "text-emerald-600",
-                        },
-                        {
-                          range: "0.50–0.60",
-                          yorum: "Eylem Düşün",
-                          color: "text-orange-600",
-                        },
-                        {
-                          range: ">0.60",
-                          yorum: "Eyleme Geç",
-                          color: "text-red-600",
-                        },
+                        { range: "<0.40", yorum: "Dikkat", text: "text-amber-700", bg: "bg-amber-50 border border-amber-200" },
+                        { range: "0.40–0.50", yorum: "Uygun", text: "text-emerald-700", bg: "bg-emerald-50 border border-emerald-200" },
+                        { range: "0.50–0.60", yorum: "Sınırda", text: "text-orange-700", bg: "bg-orange-50 border border-orange-200" },
+                        { range: ">0.60", yorum: "Riskli", text: "text-red-700", bg: "bg-red-50 border border-red-200" },
                       ].map((item) => (
-                        <div
-                          key={item.range}
-                          className="bg-white/80 rounded-lg px-1 py-1.5"
-                        >
-                          <p className={`font-semibold ${item.color}`}>
-                            {item.yorum}
-                          </p>
-                          <p className="text-gray-400 text-[10px]">
-                            {item.range}
-                          </p>
+                        <div key={item.range} className={`${item.bg} rounded-xl px-1 py-2.5`}>
+                          <p className={`font-bold text-sm leading-tight ${item.text}`}>{item.yorum}</p>
+                          <p className="text-gray-400 text-xs mt-1">{item.range}</p>
                         </div>
                       ))}
                     </div>
                   </ResultCard>
                 </div>
 
-                <div
-                  className="card-anim h-full"
-                  style={{ animationDelay: "100ms" }}
-                >
+                {/* Bel / Kalça */}
+                <div className="card-anim flex flex-col" style={{ animationDelay: "100ms" }}>
                   <ResultCard
                     title="Bel / Kalça İndeksi"
                     color={belKalcaColor(results.belKalca, results.cinsiyet)}
@@ -485,10 +547,22 @@ export default function HesaplamalarPage() {
                         ? "Karın bölgesi yağlanması normal sınırlar içinde."
                         : "Karın bölgesi yağlanması risk sınırını aşıyor."}
                     </p>
+                    <div className="grid grid-cols-2 gap-1.5 text-center pt-1">
+                      {[
+                        { range: results.cinsiyet === "erkek" ? "< 0.90" : "< 0.85", yorum: "Normal", text: "text-emerald-700", bg: "bg-emerald-50 border border-emerald-200" },
+                        { range: results.cinsiyet === "erkek" ? "≥ 0.90" : "≥ 0.85", yorum: "Riskli", text: "text-red-700", bg: "bg-red-50 border border-red-200" },
+                      ].map((item) => (
+                        <div key={item.range} className={`${item.bg} rounded-xl px-2 py-2.5`}>
+                          <p className={`font-bold text-sm leading-tight ${item.text}`}>{item.yorum}</p>
+                          <p className="text-gray-400 text-xs mt-1">{item.range}</p>
+                        </div>
+                      ))}
+                    </div>
                   </ResultCard>
                 </div>
 
-                <div className="card-anim" style={{ animationDelay: "200ms" }}>
+                {/* BKİ */}
+                <div className="card-anim flex flex-col" style={{ animationDelay: "200ms" }}>
                   <ResultCard
                     title="Beden Kitle İndeksi"
                     color={bkiColor(results.bki)}
@@ -499,67 +573,33 @@ export default function HesaplamalarPage() {
                     rangeMax={45}
                   >
                     <p>
-                      <span className="text-gray-500">
-                        İdeal BKİ (yaşa göre):
-                      </span>{" "}
+                      <span className="text-gray-500">İdeal BKİ (yaşa göre):</span>{" "}
                       <span className="font-semibold">{results.idealBki}</span>
                     </p>
                     <p>
                       <span className="text-gray-500">İdeal kilo aralığı:</span>{" "}
-                      <span className="font-semibold">
-                        {results.idealKilo.toFixed(1)} kg
-                      </span>
+                      <span className="font-semibold">{results.idealKilo.toFixed(1)} kg</span>
                     </p>
-                    <div className="grid grid-cols-3 gap-1 text-center text-xs pt-1">
+                    <div className="grid grid-cols-3 gap-1.5 text-center pt-1">
                       {[
-                        {
-                          range: "<18.5",
-                          label: "Zayıf",
-                          color: "text-amber-600",
-                        },
-                        {
-                          range: "18.5–24.9",
-                          label: "Normal",
-                          color: "text-emerald-600",
-                        },
-                        {
-                          range: "25–29.9",
-                          label: "H. Şişman",
-                          color: "text-amber-600",
-                        },
-                        {
-                          range: "30–34.9",
-                          label: "Şişman",
-                          color: "text-orange-600",
-                        },
-                        {
-                          range: "35–44.9",
-                          label: "Obez",
-                          color: "text-red-600",
-                        },
-                        {
-                          range: "≥45",
-                          label: "A. Obez",
-                          color: "text-red-700",
-                        },
+                        { range: "<18.5", label: "Zayıf", text: "text-amber-700", bg: "bg-amber-50 border border-amber-200" },
+                        { range: "18.5–24.9", label: "Normal", text: "text-emerald-700", bg: "bg-emerald-50 border border-emerald-200" },
+                        { range: "25–29.9", label: "H. Şişman", text: "text-amber-700", bg: "bg-amber-50 border border-amber-200" },
+                        { range: "30–34.9", label: "Şişman", text: "text-orange-700", bg: "bg-orange-50 border border-orange-200" },
+                        { range: "35–44.9", label: "Obez", text: "text-red-700", bg: "bg-red-50 border border-red-200" },
+                        { range: "≥45", label: "A. Obez", text: "text-red-800", bg: "bg-red-100 border border-red-300" },
                       ].map((item) => (
-                        <div
-                          key={item.range}
-                          className="bg-white/80 rounded-lg px-1 py-1.5"
-                        >
-                          <p className={`font-semibold ${item.color}`}>
-                            {item.label}
-                          </p>
-                          <p className="text-gray-400 text-[10px]">
-                            {item.range}
-                          </p>
+                        <div key={item.range} className={`${item.bg} rounded-xl px-1 py-2.5`}>
+                          <p className={`font-bold text-sm leading-tight ${item.text}`}>{item.label}</p>
+                          <p className="text-gray-400 text-xs mt-1">{item.range}</p>
                         </div>
                       ))}
                     </div>
                   </ResultCard>
                 </div>
 
-                <div className="card-anim" style={{ animationDelay: "300ms" }}>
+                {/* BMR */}
+                <div className="card-anim flex flex-col" style={{ animationDelay: "300ms" }}>
                   <ResultCard
                     title="Bazal Metabolizma (BMR)"
                     color="blue"
@@ -567,20 +607,16 @@ export default function HesaplamalarPage() {
                     value={Math.round(results.bmr).toLocaleString("tr-TR")}
                     unit="kkal/gün"
                   >
-                    <p>
-                      <span className="text-gray-500">
-                        Toplam Enerji (TEE):
-                      </span>{" "}
-                      <span className="font-semibold text-brand-700">
+                    <div className="bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5 mb-1">
+                      <p className="text-xs text-brand-600 font-medium mb-0.5">Toplam Enerji (TEE)</p>
+                      <p className="text-xl font-bold text-brand-700">
                         {Math.round(results.tee).toLocaleString("tr-TR")}{" "}
-                        kkal/gün
-                      </span>
-                    </p>
+                        <span className="text-sm font-normal text-brand-500">kkal/gün</span>
+                      </p>
+                    </div>
                     <p>
                       <span className="text-gray-500">Aktivite düzeyi:</span>{" "}
-                      <span className="font-semibold">
-                        {AKTIVITE_LABELS[results.aktivite]}
-                      </span>
+                      <span className="font-semibold">{AKTIVITE_LABELS[results.aktivite]}</span>
                     </p>
                     <p>
                       <span className="text-gray-500">Çarpan:</span>{" "}
@@ -592,10 +628,8 @@ export default function HesaplamalarPage() {
                 </div>
               </div>
 
-              <div
-                className="card-anim mt-5"
-                style={{ animationDelay: "380ms" }}
-              >
+              {/* Randevu Al */}
+              <div className="card-anim mt-5" style={{ animationDelay: "400ms" }}>
                 <div className="rounded-2xl bg-white border border-brand-100 px-6 py-6 text-center shadow-sm">
                   <p className="text-sm font-medium text-gray-700 mb-1">
                     Bu hesaplamalar yalnızca bilgilendirme amaçlıdır.

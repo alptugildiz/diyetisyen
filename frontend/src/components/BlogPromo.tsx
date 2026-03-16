@@ -107,7 +107,7 @@ export default function BlogPromo() {
     <section
       ref={sectionRef}
       id="blog-promo"
-      className="py-48 px-6 relative bg-linear-to-b from-brand-50 to-brand-bg overflow-hidden"
+      className="pt-16 md:pt-48 pb-48 px-6 relative bg-linear-to-b from-brand-50 to-brand-bg overflow-hidden"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleLeave}
     >

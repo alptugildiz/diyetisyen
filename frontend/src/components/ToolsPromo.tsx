@@ -18,13 +18,15 @@ export default function ToolsPromo() {
   const sectionRef = useRef<HTMLElement>(null);
 
   useIsomorphicLayoutEffect(() => {
+    const isMobile = window.innerWidth < 1024;
     const ctx = gsap.context(() => {
       gsap.fromTo(
         ".tp-left",
-        { opacity: 0, x: -50 },
+        { opacity: 0, x: isMobile ? 0 : -50, y: isMobile ? -30 : 0 },
         {
           opacity: 1,
           x: 0,
+          y: 0,
           duration: 0.8,
           ease: "power3.out",
           scrollTrigger: { trigger: sectionRef.current, start: "top 75%" },
@@ -32,10 +34,11 @@ export default function ToolsPromo() {
       );
       gsap.fromTo(
         ".tp-card",
-        { opacity: 0, x: 60, rotate: 4 },
+        { opacity: 0, x: isMobile ? 0 : 60, y: isMobile ? -40 : 0, rotate: 4 },
         {
           opacity: 1,
           x: 0,
+          y: 0,
           rotate: 3,
           duration: 0.8,
           ease: "power3.out",
@@ -51,7 +54,7 @@ export default function ToolsPromo() {
     <section
       ref={sectionRef}
       id="hesaplamalar-promo"
-      className="py-32 px-6 bg-brand-50 overflow-hidden"
+      className="py-16 lg:py-32 px-6 bg-brand-50 overflow-hidden"
     >
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
         {/* Sol: Örnek sonuç kartı mockup */}
