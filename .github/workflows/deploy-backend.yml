@@ -37,6 +37,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Trigger CapRover deployment
+      - name: Deploy to CapRover
         run: |
-          curl -X POST "${{ secrets.CAPROVER_BACKEND_WEBHOOK }}"
+          npm install -g caprover
+          caprover deploy \
+            --caproverUrl https://captain.188.245.232.63.nip.io \
+            --appToken ${{ secrets.CAPROVER_BACKEND_TOKEN }} \
+            --appName diyet-backend \
+            --imageName alpldz/diyet-backend:latest
