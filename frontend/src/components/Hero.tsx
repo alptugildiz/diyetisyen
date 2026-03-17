@@ -65,12 +65,12 @@ export default function Hero() {
             hedeflerinize ulaşın.
           </p>
           <div className="hero-cta opacity-0 flex flex-row flex-wrap gap-3 justify-center lg:justify-start relative top">
-            <a
-              href="#iletisim"
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-appointment-modal"))}
               className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-6 py-3 text-sm rounded-full transition-colors duration-200"
             >
               Randevu Al
-            </a>
+            </button>
             <a
               href="/blog"
               className="border-2 border-brand-500 text-brand-600 hover:bg-brand-50 font-semibold px-6 py-3 text-sm rounded-full transition-colors duration-200"

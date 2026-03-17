@@ -182,14 +182,14 @@ export default function Navbar() {
           ))}
 
           <li ref={randevuRef} onMouseEnter={handleRandevuEnter}>
-            <Link
-              href="/#iletisim"
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-appointment-modal"))}
               className={`relative top-0.5 z-10 block text-sm font-semibold px-5 py-2 rounded-full transition-colors duration-200 ${
                 isRandevuActive ? "text-white" : "text-gray-900"
               }`}
             >
               Randevu Al
-            </Link>
+            </button>
           </li>
         </ul>
 
@@ -220,13 +220,15 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <Link
-            href="/#iletisim"
-            onClick={() => setOpen(false)}
+          <button
+            onClick={() => {
+              setOpen(false);
+              window.dispatchEvent(new CustomEvent("open-appointment-modal"));
+            }}
             className="bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm text-center px-5 py-2.5 rounded-full transition-colors duration-200"
           >
             Randevu Al
-          </Link>
+          </button>
         </div>
       )}
     </nav>

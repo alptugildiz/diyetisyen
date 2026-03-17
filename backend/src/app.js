@@ -10,6 +10,7 @@ const faqRoutes = require("./routes/faqs");
 const adminPostRoutes = require("./routes/admin/posts");
 const adminFaqRoutes = require("./routes/admin/faqs");
 const adminUploadRoutes = require("./routes/admin/upload");
+const appointmentRoutes = require("./routes/appointment");
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.get("/api/health", (_req, res) =>
 app.use("/api/posts", postRoutes);
 app.use("/api/faqs", faqRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/appointment", appointmentRoutes);
 
 // Admin (protected) routes
 app.use("/api/admin/posts", adminPostRoutes);

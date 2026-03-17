@@ -1,210 +1,191 @@
-# VPS Deploy Rehberi
+# VPS Deploy Rehberi (CapRover)
 
-Canlıya çıkmadan önce yapılması gereken her değişiklik bu belgede.
+Bu proje **CapRover** üzerinden deploy edilir. Nginx ve Caddy kullanılmaz — SSL CapRover tarafından otomatik olarak yönetilir.
 
-> **Not:** Nginx kaldırıldı, yerine **Caddy** kullanılıyor. Caddy SSL'i otomatik alır, nginx + Certbot kurmanıza gerek kalmaz.
+## Docker Image URL'leri
 
----
-
-## 1. Yerel Geliştirmeden Farklar
-
-| Ayar | Geliştirme (local) | Production (VPS) |
-|---|---|---|
-| `backend/.env` → `MONGO_URI` | `mongodb://localhost:27017/diyet` | `mongodb://mongo:27017/diyet` |
-| `backend/.env` → `NODE_ENV` | `development` | `production` |
-| `.env` → `NEXTAUTH_URL` | `http://localhost:3000` | `https://siteniz.com` |
-| `.env` → `CADDY_HOST` | ayarlanmaz (localhost) | `siteniz.com` |
-| Admin şifresi | `Admin1234!` (seed default) | Güçlü şifre (aşağıya bak) |
+| Servis | Image |
+|--------|-------|
+| Frontend (Next.js) | `alpldz/diyet-frontend:latest` |
+| Backend (Express) | `alpldz/diyet-backend:latest` |
+| Veritabanı | CapRover One-Click App → MongoDB |
 
 ---
 
-## 2. Dosya Değişiklikleri
-
-### 2.1 `backend/.env`
-
-```dotenv
-# Docker Compose iç ağı — localhost DEĞİL
-MONGO_URI=mongodb://mongo:27017/diyet
-
-# En az 64 karakter random string üret:
-# node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-JWT_SECRET=BURAYA_URETILEN_STRINGI_YAZ
-
-PORT=5000
-NODE_ENV=production
-UPLOAD_DIR=uploads
-```
-
-### 2.2 `.env` (proje kökü, docker-compose okur)
-
-```dotenv
-# Gerçek domaininiz — HTTP değil HTTPS
-NEXTAUTH_URL=https://siteniz.com
-
-# En az 32 karakter random string:
-# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-NEXTAUTH_SECRET=BURAYA_URETILEN_STRINGI_YAZ
-
-# Caddy'e domaini bildir (SSL otomatik alınır)
-CADDY_HOST=siteniz.com
-```
-
-> `Caddyfile` değiştirilmez — `CADDY_HOST` env değişkeni yeterli.
-
----
-
-## 3. VPS'e Kurulum — Adım Adım
+## 1. CapRover Kurulumu (VPS'te İlk Kez)
 
 ### Ön koşullar
-
-- Ubuntu 22.04+ VPS (DigitalOcean, Hetzner, vb.)
-- Domainin DNS A kaydı VPS IP'ye yönlendirilmiş ve yayılmış
+- Ubuntu 22.04+ VPS
+- Domainin `*.siteniz.com` wildcard DNS kaydı CapRover IP'ye yönlendirilmiş olmalı
 - Root veya sudo yetkili kullanıcı
 
-### 3.1 Docker Kur
+### Docker Kur
 
 ```bash
 curl -fsSL https://get.docker.com | sh
-systemctl enable docker
-systemctl start docker
-
-# Docker Compose plugin (v2)
-apt install -y docker-compose-plugin
-
-# Test
-docker --version
-docker compose version
+systemctl enable docker && systemctl start docker
 ```
 
-### 3.2 Kodu VPS'e Al
+### CapRover Kur
 
 ```bash
-git clone https://github.com/KULLANICI/diyet.git /var/www/diyet
-cd /var/www/diyet
+docker run -p 80:80 -p 443:443 -p 3000:3000 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /captain:/captain \
+  caprover/caprover
 ```
 
-### 3.3 .env Dosyalarını Oluştur
-
-```bash
-# Backend
-cp backend/.env.example backend/.env
-nano backend/.env
-# MONGO_URI=mongodb://mongo:27017/diyet  ← mongo yaz, localhost değil
-# JWT_SECRET=...  ← random üret ve yapıştır
-# NODE_ENV=production
-
-# Proje kökü
-nano .env
-# NEXTAUTH_URL=https://siteniz.com
-# NEXTAUTH_SECRET=...  ← random üret ve yapıştır
-# CADDY_HOST=siteniz.com
-```
-
-### 3.4 Servisleri Başlat
-
-```bash
-cd /var/www/diyet
-docker compose up -d --build
-# İlk build ~3-5 dakika sürer
-```
-
-Caddy, başlar başlamaz `siteniz.com` için otomatik olarak **Let's Encrypt SSL sertifikası** alır.
-Bunun için 80 ve 443 portlarının açık olması gerekir.
-
-### 3.5 Admin Kullanıcısını Oluştur (Sadece İlk Kez)
-
-```bash
-docker compose exec backend node src/scripts/seed-admin.js
-# Çıktı: Admin created: admin@diyet.com / Admin1234!
-```
-
-**Hemen ardından şifreyi değiştir** (bölüm 4'e bak).
+Kurulum tamamlanınca `http://VPS_IP:3000` adresinden CapRover dashboard'una giriş yap.
+Varsayılan şifre: `captain42` — **hemen değiştir.**
 
 ---
 
-## 4. Admin Şifresini Değiştir (KRİTİK)
+## 2. MongoDB Kurulumu (CapRover One-Click App)
 
-```bash
-docker compose exec backend node -e "
-require('dotenv').config();
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const Admin = require('./src/models/Admin');
+CapRover Dashboard → **One-Click Apps** → `MongoDB` seç → kur.
 
-mongoose.connect(process.env.MONGO_URI).then(async () => {
-  const hash = await bcrypt.hash('YeniGüçlüŞifreniz!', 10);
-  await Admin.findOneAndUpdate(
-    { email: 'admin@diyet.com' },
-    { passwordHash: hash }
-  );
-  console.log('Şifre güncellendi');
-  process.exit(0);
-});
-"
-```
+- App adı: `mongo` (veya istediğin bir şey)
+- Port: `27017`
+- CapRover iç ağ hostname: `srv-captain--mongo` (app adına göre değişir)
+
+> **Not:** Backend `.env` içindeki `MONGO_URI` değerini bu hostname ile güncelle.
+> Örn: `MONGO_URI=mongodb://srv-captain--mongo:27017/diyet`
 
 ---
 
-## 5. Güncelleme Yapmak
+## 3. Backend Deploy
 
-```bash
-cd /var/www/diyet
-git pull
+### 3.1 Yeni App Oluştur
+CapRover Dashboard → **Apps** → **Create New App**
+- App adı: `diyet-backend`
+- HTTP/S: açık
 
-docker compose up -d --build frontend  # sadece frontend
-docker compose up -d --build backend   # sadece backend
-docker compose up -d --build           # ikisi de
+### 3.2 Image Kaynağı Ayarla
+App → **Deployment** sekmesi → **Deploy via ImageName**
+
 ```
+alpldz/diyet-backend:latest
+```
+
+### 3.3 Ortam Değişkenlerini Gir
+App → **App Configs** → **Environmental Variables**
+
+```
+MONGO_URI=mongodb://srv-captain--mongo:27017/diyet
+JWT_SECRET=<64 karakter random string>
+PORT=5000
+NODE_ENV=production
+UPLOAD_DIR=uploads
+TELEGRAM_BOT_TOKEN=<botfather'dan aldığın token>
+TELEGRAM_CHAT_ID=<telegram chat id>
+```
+
+> JWT_SECRET üretmek için: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
+
+### 3.4 Port Ayarla
+App → **App Configs** → **Container HTTP Port**: `5000`
+
+### 3.5 Deploy Et
+**Deployment** → **Deploy** butonuna tıkla.
 
 ---
 
-## 6. Faydalı Komutlar
+## 4. Frontend Deploy
+
+### 4.1 Yeni App Oluştur
+CapRover Dashboard → **Apps** → **Create New App**
+- App adı: `diyet-frontend`
+- HTTP/S: açık
+
+### 4.2 Image Kaynağı Ayarla
+App → **Deployment** sekmesi → **Deploy via ImageName**
+
+```
+alpldz/diyet-frontend:latest
+```
+
+### 4.3 Ortam Değişkenlerini Gir
+App → **App Configs** → **Environmental Variables**
+
+```
+NEXTAUTH_URL=https://siteniz.com
+NEXTAUTH_SECRET=<32 karakter random string>
+AUTH_TRUST_HOST=true
+BACKEND_URL=http://srv-captain--diyet-backend:5000
+```
+
+> `BACKEND_URL` değeri CapRover iç ağ adresini kullanır — internet üzerinden geçmez, hızlı ve güvenli.
+> `NEXTAUTH_SECRET` üretmek için: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+
+### 4.4 Port Ayarla
+App → **App Configs** → **Container HTTP Port**: `3000`
+
+### 4.5 Domain Bağla
+App → **HTTP Settings** → **Connect New Domain**
+- Domain: `siteniz.com`
+- **Enable HTTPS** → CapRover Let's Encrypt ile SSL'i otomatik alır
+
+### 4.6 Deploy Et
+**Deployment** → **Deploy** butonuna tıkla.
+
+---
+
+## 5. Admin Kullanıcısını Oluştur (Sadece İlk Kez)
+
+CapRover Dashboard → **diyet-backend** → **App Logs / Console** → Exec komut:
 
 ```bash
-# Logları izle
-docker compose logs -f
-docker compose logs -f caddy
-docker compose logs -f frontend
-docker compose logs -f backend
-
-# Container durumları
-docker compose ps
-
-# Servisleri durdur (veri korunur)
-docker compose down
-
-# Servisleri durdur + veriyi de sil (dikkat!)
-docker compose down -v
+node src/scripts/seed-admin.js
 ```
+
+Veya local makineden (backend ayaktaysa):
+```bash
+# CapRover app URL'si üzerinden değil, doğrudan container exec ile
+docker exec -it <container_id> node src/scripts/seed-admin.js
+```
+
+Varsayılan: `admin@diyet.com` / `Admin1234!` — **hemen değiştir.**
+
+---
+
+## 6. Image Güncelleme (Yeni Versiyon Deploy)
+
+Kod değişikliği yapıldıktan sonra yeni image build edip push et:
+
+```bash
+# Multiplatform build + push
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t alpldz/diyet-backend:latest --push ./backend
+
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t alpldz/diyet-frontend:latest --push ./frontend
+```
+
+Ardından CapRover → ilgili app → **Deployment** → **Deploy** (image yeniden çekilir).
 
 ---
 
 ## 7. Uploads Klasörü (Kapak Görselleri)
 
-Blog editöründe yüklenen görseller backend container'ında `/app/uploads/` altında tutulur. Docker Compose `uploads` volume'u tanımlar, bu sayede container yeniden başlasa bile dosyalar kaybolmaz.
+Blog editöründe yüklenen görseller backend container'ında `/app/uploads/` altında tutulur.
 
-**Görseller için ekstra bir şey yapmanıza gerek yok** — volume otomatik oluşur.
+CapRover'da **Persistent Directory** ayarla:
+- App → **App Configs** → **Persistent Directories**
+- Container Path: `/app/uploads`
+- Label: `uploads`
 
-> Görsel URL'leri veritabanında `/uploads/dosyaadi.webp` formatında saklanır.
-> Frontend, `/uploads/*` isteklerini Next.js rewrite'ı ile backend'e proxy'ler.
-> Bu hem local hem production'da aynı çalışır.
-
-### Yedek Almak (opsiyonel)
-
-```bash
-# Uploads klasörünü yerel makineye kopyala
-docker compose cp backend:/app/uploads ./uploads-backup
-```
+Bu sayede container yeniden deploy edilse bile görseller kaybolmaz.
 
 ---
 
 ## 8. Kontrol Listesi
 
-- [ ] `https://siteniz.com` açılıyor (HTTP → HTTPS otomatik yönlendirme)
+- [ ] `https://siteniz.com` açılıyor
 - [ ] `https://siteniz.com/api/health` → `{"status":"ok"}` dönüyor
-- [ ] `/blog` sayfası blog yazılarını gösteriyor
+- [ ] `/blog` sayfası yazıları gösteriyor
 - [ ] `/sss` sayfası SSS listesini gösteriyor
 - [ ] `/admin/login` → giriş yapılabiliyor
 - [ ] Admin panelden blog yazısı oluşturulup yayınlanabiliyor
-- [ ] Kapak görseli yüklenip blog kartında görünüyor
+- [ ] Randevu Al modalı → Telegram'a mesaj geliyor
 - [ ] Admin şifresi varsayılandan değiştirildi
+- [ ] Backend Persistent Directory `/app/uploads` ayarlı

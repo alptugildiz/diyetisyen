@@ -126,7 +126,16 @@ export default function Footer() {
       </div>
 
       <div className="max-w-6xl mx-auto border-t border-white/10 mt-12 pt-6 flex items-center justify-between text-xs text-white/30">
-        <span>© {new Date().getFullYear()} 21 collective</span>
+        <span>Good design speaks. Our design flirts. –{" "}
+          <a
+            href="https://21collective.co/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white/60 transition-colors"
+          >
+            21collective™
+          </a>
+        </span>
         <span>Tüm hakları saklıdır.</span>
       </div>
     </footer>

@@ -34,7 +34,8 @@ router.post("/", async (req, res) => {
       return res
         .status(400)
         .json({ message: "Validation error", errors: err.errors });
-    res.status(500).json({ message: "Server error" });
+    console.error("FAQ POST error:", err);
+    res.status(500).json({ message: "Server error", detail: err.message });
   }
 });
 

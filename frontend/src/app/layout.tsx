@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import localFont from "next/font/local";
 import GsapProvider from "@/providers/GsapProvider";
+import AppointmentModal from "@/components/AppointmentModal";
 import "./globals.css";
 
 const nexa = localFont({
@@ -14,10 +16,38 @@ const nexa = localFont({
   ],
 });
 
+const GA_ID = "G-JKSWXYLYTP";
+
 export const metadata: Metadata = {
-  title: "Diyetisyen | Sağlıklı Yaşam",
+  title: {
+    default: "Diyetisyen | Beyza Şule Kahraman",
+    template: "%s | Beyza Şule Kahraman",
+  },
   description:
     "Uzman diyetisyen danışmanlığı, kişiye özel diyet programları ve sağlıklı beslenme rehberliği.",
+  metadataBase: new URL("https://trakyadyt.com"),
+  alternates: { canonical: "/" },
+  icons: { icon: "/favicon.svg" },
+  openGraph: {
+    type: "website",
+    locale: "tr_TR",
+    url: "https://trakyadyt.com",
+    siteName: "Diyetisyen Beyza Şule Kahraman",
+    title: "Diyetisyen | Beyza Şule Kahraman",
+    description:
+      "Uzman diyetisyen danışmanlığı, kişiye özel diyet programları ve sağlıklı beslenme rehberliği.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Diyetisyen | Beyza Şule Kahraman",
+    description:
+      "Uzman diyetisyen danışmanlığı, kişiye özel diyet programları ve sağlıklı beslenme rehberliği.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
 };
 
 export default function RootLayout({
@@ -27,10 +57,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      <body
-        className={`${nexa.variable} antialiased`}
-      >
+      <head>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}');
+          `}
+        </Script>
+      </head>
+      <body className={`${nexa.variable} antialiased`}>
         <GsapProvider>{children}</GsapProvider>
+        <AppointmentModal />
       </body>
     </html>
   );

@@ -15,6 +15,7 @@ export default function GsapProvider({
 }) {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
+    console.log("Builded by 21collective.co with love ^^");
   }, []);
 
   return <>{children}</>;

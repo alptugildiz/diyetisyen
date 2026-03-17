@@ -42,7 +42,8 @@ router.post("/", async (req, res) => {
   try {
     const data = postSchema.parse(req.body);
     const slug = slugify(data.title, { lower: true, strict: true });
-    const post = await Post.create({ ...data, slug });
+    const publishedAt = data.status === "published" ? new Date() : undefined;
+    const post = await Post.create({ ...data, slug, publishedAt });
     res.status(201).json(post);
   } catch (err) {
     if (err.name === "ZodError")
@@ -61,6 +62,7 @@ router.put("/:id", async (req, res) => {
     const data = postSchema.partial().parse(req.body);
     if (data.title)
       data.slug = slugify(data.title, { lower: true, strict: true });
+    if (data.status === "published") data.publishedAt = data.publishedAt ?? new Date();
     const post = await Post.findByIdAndUpdate(req.params.id, data, {
       new: true,
       runValidators: true,

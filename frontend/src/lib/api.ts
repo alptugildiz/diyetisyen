@@ -72,6 +72,18 @@ export function getFaqs(): Promise<Faq[]> {
   return apiFetch<Faq[]>("/api/faqs");
 }
 
+export function submitAppointment(data: {
+  name: string;
+  email: string;
+  phone: string;
+}): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>("/api/appointment", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 // ─── Admin ─────────────────────────────────────────────────────
 
 async function adminFetch<T>(

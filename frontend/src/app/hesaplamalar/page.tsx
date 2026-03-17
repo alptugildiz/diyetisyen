@@ -638,12 +638,12 @@ export default function HesaplamalarPage() {
                     Kesin tanı ve kişiye özel beslenme programı için bir
                     diyetisyene danışmanız önerilir.
                   </p>
-                  <a
-                    href="/#iletisim"
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("open-appointment-modal"))}
                     className="inline-block bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm px-7 py-3 rounded-full transition-colors duration-200"
                   >
                     Randevu Al
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
