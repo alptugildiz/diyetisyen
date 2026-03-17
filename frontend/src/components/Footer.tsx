@@ -1,18 +1,47 @@
+"use client";
+
+import { useState } from "react";
+
 export default function Footer() {
+  const [mapLoaded, setMapLoaded] = useState(false);
+
   return (
     <footer id="iletisim" className="bg-brand-600 py-16 px-6">
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-stretch">
         {/* Harita */}
-        <div className="rounded-2xl overflow-hidden h-64 md:h-80">
+        <div className="rounded-2xl overflow-hidden h-64 md:h-80 relative">
+          {!mapLoaded && (
+            <div className="absolute inset-0 bg-white/10 animate-pulse rounded-2xl flex items-center justify-center">
+              <svg
+                className="w-10 h-10 text-white/20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
+                />
+              </svg>
+            </div>
+          )}
           <iframe
             src="https://maps.google.com/maps?q=41.3903135,27.3595568&z=16&output=embed&hl=tr&scrollwheel=true"
             width="100%"
             height="100%"
-            style={{ border: 0 }}
+            style={{ border: 0, opacity: mapLoaded ? 1 : 0, transition: "opacity 0.4s ease" }}
             allowFullScreen
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             title="Klinik Konumu"
+            onLoad={() => setMapLoaded(true)}
           />
         </div>
 
