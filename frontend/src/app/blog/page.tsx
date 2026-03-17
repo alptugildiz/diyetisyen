@@ -81,7 +81,7 @@ export default async function BlogPage({ searchParams }: Props) {
             </p>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {posts.map((post) => (
+              {posts.map((post, i) => (
                 <Link
                   key={post._id}
                   href={`/blog/${post.slug}`}
@@ -93,6 +93,8 @@ export default async function BlogPage({ searchParams }: Props) {
                       src={post.coverImage}
                       alt={post.title}
                       className="w-full h-48 object-cover"
+                      loading={i === 0 ? "eager" : "lazy"}
+                      fetchPriority={i === 0 ? "high" : "auto"}
                     />
                   ) : (
                     <div className="w-full h-48 bg-brand-100 flex items-center justify-center">
