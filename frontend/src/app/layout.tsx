@@ -20,11 +20,11 @@ const GA_ID = "G-JKSWXYLYTP";
 
 export const metadata: Metadata = {
   title: {
-    default: "Diyetisyen | Beyza Şule Kahraman",
+    default: "Trakya Diyetisyeni | Beyza Şule Kahraman",
     template: "%s | Beyza Şule Kahraman",
   },
   description:
-    "Uzman diyetisyen danışmanlığı, kişiye özel diyet programları ve sağlıklı beslenme rehberliği.",
+    "Lüleburgaz ve Trakya bölgesinin uzman diyetisyeni Beyza Şule Kahraman ile kişiye özel diyet programları ve sağlıklı beslenme danışmanlığı.",
   metadataBase: new URL("https://trakyadyt.com"),
   alternates: { canonical: "/" },
   icons: { icon: "/favicon.svg" },
@@ -32,16 +32,16 @@ export const metadata: Metadata = {
     type: "website",
     locale: "tr_TR",
     url: "https://trakyadyt.com",
-    siteName: "Diyetisyen Beyza Şule Kahraman",
-    title: "Diyetisyen | Beyza Şule Kahraman",
+    siteName: "Trakya Diyetisyeni Beyza Şule Kahraman",
+    title: "Trakya Diyetisyeni | Beyza Şule Kahraman",
     description:
-      "Uzman diyetisyen danışmanlığı, kişiye özel diyet programları ve sağlıklı beslenme rehberliği.",
+      "Lüleburgaz ve Trakya bölgesinin uzman diyetisyeni Beyza Şule Kahraman ile kişiye özel diyet programları ve sağlıklı beslenme danışmanlığı.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Diyetisyen | Beyza Şule Kahraman",
+    title: "Trakya Diyetisyeni | Beyza Şule Kahraman",
     description:
-      "Uzman diyetisyen danışmanlığı, kişiye özel diyet programları ve sağlıklı beslenme rehberliği.",
+      "Lüleburgaz ve Trakya bölgesinin uzman diyetisyeni Beyza Şule Kahraman ile kişiye özel diyet programları ve sağlıklı beslenme danışmanlığı.",
   },
   robots: {
     index: true,
@@ -58,6 +58,32 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "LocalBusiness",
+              "name": "Diyetisyen Beyza Şule Kahraman",
+              "description": "Lüleburgaz ve Trakya bölgesinin uzman diyetisyeni. Kişiye özel diyet programları ve sağlıklı beslenme danışmanlığı.",
+              "url": "https://trakyadyt.com",
+              "telephone": "+90-555-123-45-67",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Lüleburgaz",
+                "addressRegion": "Kırklareli",
+                "addressCountry": "TR"
+              },
+              "areaServed": [
+                { "@type": "City", "name": "Lüleburgaz" },
+                { "@type": "City", "name": "Kırklareli" },
+                { "@type": "AdministrativeArea", "name": "Trakya" }
+              ],
+              "priceRange": "$$",
+              "knowsAbout": ["Beslenme", "Diyet", "Kilo Yönetimi", "Sağlıklı Beslenme"]
+            }),
+          }}
+        />
         {/* Preconnect for external origins */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
