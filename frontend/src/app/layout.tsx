@@ -67,7 +67,7 @@ export default function RootLayout({
               "name": "Diyetisyen Beyza Şule Kahraman",
               "description": "Lüleburgaz ve Trakya bölgesinin uzman diyetisyeni. Kişiye özel diyet programları ve sağlıklı beslenme danışmanlığı.",
               "url": "https://trakyadyt.com",
-              "telephone": "+90-555-123-45-67",
+              "telephone": "+90-542-689-80-44",
               "address": {
                 "@type": "PostalAddress",
                 "addressLocality": "Lüleburgaz",
