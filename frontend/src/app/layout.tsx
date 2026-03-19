@@ -20,7 +20,7 @@ const GA_ID = "G-JKSWXYLYTP";
 
 export const metadata: Metadata = {
   title: {
-    default: "Trakya Diyetisyeni | Beyza Şule Kahraman",
+    default: "Trakya Diyetisyen | Beyza Şule Kahraman",
     template: "%s | Beyza Şule Kahraman",
   },
   description:
@@ -32,14 +32,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "tr_TR",
     url: "https://trakyadyt.com",
-    siteName: "Trakya Diyetisyeni Beyza Şule Kahraman",
-    title: "Trakya Diyetisyeni | Beyza Şule Kahraman",
+    siteName: "Trakya Diyetisyen Beyza Şule Kahraman",
+    title: "Trakya Diyetisyen | Beyza Şule Kahraman",
     description:
       "Lüleburgaz ve Trakya bölgesinin uzman diyetisyeni Beyza Şule Kahraman ile kişiye özel diyet programları ve sağlıklı beslenme danışmanlığı.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Trakya Diyetisyeni | Beyza Şule Kahraman",
+    title: "Trakya Diyetisyen | Beyza Şule Kahraman",
     description:
       "Lüleburgaz ve Trakya bölgesinin uzman diyetisyeni Beyza Şule Kahraman ile kişiye özel diyet programları ve sağlıklı beslenme danışmanlığı.",
   },
