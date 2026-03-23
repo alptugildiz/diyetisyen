@@ -1,5 +1,24 @@
 # Trakya Diyetisyen
 
+## [21 Collective](https://21collective.co/) tarafından ❤️ ile yapıldıç
+
+**21 Collective**, Istanbul ve Londra merkezli bir premium dijital ajans.
+
+> *"Good design speaks. Our design flirts."*
+
+Markaları geleceğe taşımak için modern teknoloji ve uzman bir ekiple dijital çözümler üretiyorlar:
+
+- **Web Geliştirme** — Next.js ve React ile hızlı, ölçeklenebilir uygulamalar
+- **Mobil Uygulama** — iOS ve Android için native geliştirme
+- **Görsel Tasarım** — Marka kimliğine uygun, işlevsel tasarımlar
+- **Yapay Zeka Çözümleri** — İş süreçlerini otomatikleştiren AI entegrasyonları
+
+50+ tamamlanan proje · 30+ memnun müşteri · 8+ yıl deneyim
+
+[21collective.co →](https://21collective.co/)
+
+---
+
 Bir diyetisyen kliniği için geliştirilen modern, tam yığın web uygulaması. Blog yazıları, SSS yönetimi, admin paneli ve vücut analiz araçları içerir.
 
 ---
@@ -88,21 +107,4 @@ diyet/
 - `GET /api/<kaynak>` — Herkese açık endpoint'ler
 - `POST/PUT/DELETE /api/admin/<kaynak>` — JWT korumalı admin endpoint'ler
 
----
 
-## Yapıldı ile ❤️ [21 Collective](https://21collective.co/) tarafından
-
-**21 Collective**, Istanbul ve Londra merkezli bir premium dijital ajans.
-
-> *"Good design speaks. Our design flirts."*
-
-Markaları geleceğe taşımak için modern teknoloji ve uzman bir ekiple dijital çözümler üretiyorlar:
-
-- **Web Geliştirme** — Next.js ve React ile hızlı, ölçeklenebilir uygulamalar
-- **Mobil Uygulama** — iOS ve Android için native geliştirme
-- **Görsel Tasarım** — Marka kimliğine uygun, işlevsel tasarımlar
-- **Yapay Zeka Çözümleri** — İş süreçlerini otomatikleştiren AI entegrasyonları
-
-50+ tamamlanan proje · 30+ memnun müşteri · 5+ yıl deneyim
-
-[21collective.co →](https://21collective.co/)
