@@ -1,6 +1,5 @@
-# Trakya Diyetisyen
 
-## [21 Collective](https://21collective.co/) tarafından ❤️ ile yapıldıç
+## [21 Collective](https://21collective.co/) tarafından sevgi ile yapıldı ❤️
 
 **21 Collective**, Istanbul ve Londra merkezli bir premium dijital ajans.
 
@@ -18,6 +17,7 @@ Markaları geleceğe taşımak için modern teknoloji ve uzman bir ekiple dijita
 [21collective.co →](https://21collective.co/)
 
 ---
+# Trakya Diyetisyen
 
 Bir diyetisyen kliniği için geliştirilen modern, tam yığın web uygulaması. Blog yazıları, SSS yönetimi, admin paneli ve vücut analiz araçları içerir.
 
