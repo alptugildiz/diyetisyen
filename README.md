@@ -1,7 +1,7 @@
 
-## [21 Collective](https://21collective.co/) tarafından sevgi ile yapıldı ❤️
+## [21collective](https://21collective.co/) tarafından sevgi ile yapıldı ❤️
 
-**21 Collective**, Istanbul ve Londra merkezli bir premium dijital ajans.
+**21collective**, Istanbul ve Londra merkezli bir premium dijital ajans.
 
 > *"Good design speaks. Our design flirts."*
 
