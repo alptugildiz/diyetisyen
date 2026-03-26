@@ -2,6 +2,7 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import gsap from "gsap";
 import useIsomorphicLayoutEffect from "@/hooks/useIsomorphicLayoutEffect";
 import SaladAnimation from "@/components/advanced/SaladAnimation";
@@ -49,11 +50,19 @@ export default function Hero() {
       ref={heroRef}
       className="grain relative overflow-hidden min-h-screen flex items-center justify-center bg-linear-to-b from-brand-bg to-brand-50 px-6"
     >
+      <Image
+        src="/banner/outdoor_16x9.jpg"
+        alt=""
+        fill
+        className="object-cover opacity-[0.06] pointer-events-none select-none"
+        priority
+        aria-hidden
+      />
       <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center justify-center gap-12">
         {/* Sol: Metin */}
         <div className="flex-1 text-center lg:text-left">
           <p className="font-cabin hero-eyebrow opacity-0 text-brand-600 font-semibold tracking-widest uppercase text-sm mb-4">
-            Uzman Diyetisyen Danışmanlığı
+            Beslenme ve Diyet Danışmanlığı
           </p>
           <h1 className="font-oswald hero-title opacity-0 text-5xl md:text-7xl font-bold text-gray-900 leading-tight mb-6">
             Sağlıklı Beslenme,

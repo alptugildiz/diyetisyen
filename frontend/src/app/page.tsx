@@ -4,6 +4,7 @@ import Services from "@/components/Services";
 import About from "@/components/About";
 import ToolsPromo from "@/components/ToolsPromo";
 import BlogPromo from "@/components/BlogPromo";
+import InstagramCards from "@/components/InstagramCards";
 import Footer from "@/components/Footer";
 
 export default function HomePage() {
@@ -16,6 +17,7 @@ export default function HomePage() {
         <Services />
         <ToolsPromo />
         <BlogPromo />
+        <InstagramCards />
       </main>
       <Footer />
     </>
