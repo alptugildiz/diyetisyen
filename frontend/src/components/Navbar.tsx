@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/#hakkimda", label: "Hakkımda", section: "hakkimda" },
   { href: "/hesaplamalar", label: "Hesaplamalar", section: null },
-  { href: "/blog", label: "Blog", section: null },
+  { href: "/blog", label: "Blog", section: "blog-promo" },
   { href: "/sss", label: "SSS", section: null },
   { href: "/#iletisim", label: "İletişim", section: "iletisim" },
 ];
@@ -37,10 +38,10 @@ export default function Navbar() {
 
   // Aktif link indexini hesapla
   const getActiveLinkIdx = (): number | null => {
-    // Pathname tabanlı eşleşme (/blog, /sss, /araclar)
+    // Pathname tabanlı eşleşme (/blog, /sss, /hesaplamalar)
     for (let i = 0; i < links.length; i++) {
       const link = links[i];
-      if (!link.section && link.href === pathname) return i;
+      if (link.href === pathname) return i;
     }
     // Ana sayfada section bazlı
     if (pathname === "/") {
@@ -136,11 +137,15 @@ export default function Navbar() {
   return (
     <nav className="font-oswald fixed top-0 left-0 right-0 z-50 bg-white/40 backdrop-blur-sm border-b border-transparent">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link
-          href="/"
-          className="font-hind-vadodara font-bold text-xl text-brand-600 tracking-tight"
-        >
-          Beyza Şule Kahraman
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/navbarlogo.png"
+            alt="Trakya Diyetisyen"
+            width={256}
+            height={14}
+            className="h-3.5 w-auto object-contain"
+            priority
+          />
         </Link>
 
         {/* Desktop */}

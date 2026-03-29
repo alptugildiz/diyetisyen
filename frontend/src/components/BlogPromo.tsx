@@ -114,7 +114,7 @@ export default function BlogPromo() {
       {/* Fare takipçi görsel - sadece desktop */}
       <div
         ref={floatRef}
-        className="hidden md:flex pointer-events-none absolute z-20 w-44 h-44 rounded-2xl items-center justify-center text-7xl shadow-xl opacity-0 flex-col gap-1"
+        className="hidden md:flex pointer-events-none absolute z-30 w-44 h-44 rounded-2xl items-center justify-center text-7xl shadow-xl opacity-0 flex-col gap-1"
         style={{ top: 0, left: 0, background: activeGradient }}
       >
         {activeEmoji}

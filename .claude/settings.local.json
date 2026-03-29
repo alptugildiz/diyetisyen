@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:21collective.co)",
+      "Bash(mv corridor_02_1x1.jpg trakya-diyetisyen-1.jpg)",
+      "Bash(mv corridor_1x1.jpg trakya-diyetisyen-2.jpg)",
+      "Bash(mv indoor_03_1x1.jpg trakya-diyetisyen-3.jpg)",
+      "Bash(mv indoor_04_1x1.jpg trakya-diyetisyen-4.jpg)",
+      "Bash(mv indoor_1x1.jpg trakya-diyetisyen-5.jpg)"
+    ]
+  }
+}

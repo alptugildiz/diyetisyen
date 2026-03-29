@@ -96,7 +96,7 @@ export default function ToolsPromo() {
                   {[
                     { label: "Zayıf", bg: "bg-amber-100", color: "text-amber-700" },
                     { label: "Normal", bg: "bg-emerald-100", color: "text-emerald-700" },
-                    { label: "Şişman", bg: "bg-orange-100", color: "text-orange-700" },
+                    { label: "Kilolu", bg: "bg-orange-100", color: "text-orange-700" },
                   ].map((item) => (
                     <div
                       key={item.label}

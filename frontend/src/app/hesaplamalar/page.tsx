@@ -135,8 +135,8 @@ function bkiColor(v: number): ColorKey {
 function bkiYorum(v: number) {
   if (v < 18.5) return "Zayıf";
   if (v < 25) return "Normal";
-  if (v < 30) return "Hafif Şişman";
-  if (v < 35) return "Şişman";
+  if (v < 30) return "Kilolu";
+  if (v < 35) return "Yüksek Kilolu";
   if (v < 45) return "Obez";
   return "Aşırı Obez";
 }
@@ -584,8 +584,8 @@ export default function HesaplamalarPage() {
                       {[
                         { range: "<18.5", label: "Zayıf", text: "text-amber-700", bg: "bg-amber-50 border border-amber-200" },
                         { range: "18.5–24.9", label: "Normal", text: "text-emerald-700", bg: "bg-emerald-50 border border-emerald-200" },
-                        { range: "25–29.9", label: "H. Şişman", text: "text-amber-700", bg: "bg-amber-50 border border-amber-200" },
-                        { range: "30–34.9", label: "Şişman", text: "text-orange-700", bg: "bg-orange-50 border border-orange-200" },
+                        { range: "25–29.9", label: "Kilolu", text: "text-amber-700", bg: "bg-amber-50 border border-amber-200" },
+                        { range: "30–34.9", label: "Y. Kilolu", text: "text-orange-700", bg: "bg-orange-50 border border-orange-200" },
                         { range: "35–44.9", label: "Obez", text: "text-red-700", bg: "bg-red-50 border border-red-200" },
                         { range: "≥45", label: "A. Obez", text: "text-red-800", bg: "bg-red-100 border border-red-300" },
                       ].map((item) => (
