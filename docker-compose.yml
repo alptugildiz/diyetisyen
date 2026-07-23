@@ -17,6 +17,9 @@ services:
     container_name: diyet_backend
     restart: unless-stopped
     env_file: ./backend/.env
+    environment:
+      # Docker network hostname; overrides localhost in .env (used for manual npm dev)
+      MONGO_URI: mongodb://mongo:27017/diyet
     depends_on:
       - mongo
     networks:

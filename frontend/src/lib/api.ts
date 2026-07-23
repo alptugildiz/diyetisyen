@@ -1,4 +1,11 @@
-import type { Post, PostListResponse, Faq } from "@/types";
+import type {
+  Post,
+  PostListResponse,
+  Faq,
+  Appointment,
+  AppointmentListResponse,
+  StatsResponse,
+} from "@/types";
 
 // Server-side (SSR/SSG): Docker internal hostname
 // Client-side (browser): empty string → relative URL → nginx proxies /api/* to backend
@@ -162,4 +169,63 @@ export function adminDeleteFaq(id: string, token: string) {
   return adminFetch<{ message: string }>(`/api/admin/faqs/${id}`, token, {
     method: "DELETE",
   });
+}
+
+// ─── Randevular & İstatistik ───────────────────────────────────
+
+export function adminGetAppointments(
+  token: string,
+  params?: { from?: string; to?: string },
+) {
+  const q = new URLSearchParams();
+  if (params?.from) q.set("from", params.from);
+  if (params?.to) q.set("to", params.to);
+  const qs = q.toString();
+  return adminFetch<AppointmentListResponse>(
+    `/api/admin/appointments${qs ? `?${qs}` : ""}`,
+    token,
+  );
+}
+
+export function adminCreateAppointment(
+  data: Partial<Appointment>,
+  token: string,
+) {
+  return adminFetch<Appointment>("/api/admin/appointments", token, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminUpdateAppointment(
+  id: string,
+  data: Partial<Appointment>,
+  token: string,
+) {
+  return adminFetch<Appointment>(`/api/admin/appointments/${id}`, token, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminDeleteAppointment(id: string, token: string) {
+  return adminFetch<{ message: string }>(
+    `/api/admin/appointments/${id}`,
+    token,
+    { method: "DELETE" },
+  );
+}
+
+export function adminGetStats(
+  token: string,
+  params?: { from?: string; to?: string },
+) {
+  const q = new URLSearchParams();
+  if (params?.from) q.set("from", params.from);
+  if (params?.to) q.set("to", params.to);
+  const qs = q.toString();
+  return adminFetch<StatsResponse>(
+    `/api/admin/stats${qs ? `?${qs}` : ""}`,
+    token,
+  );
 }

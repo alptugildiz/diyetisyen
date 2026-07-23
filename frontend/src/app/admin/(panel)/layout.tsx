@@ -29,6 +29,8 @@ export default async function AdminLayout({
             <ul className="space-y-1">
               {[
                 { href: "/admin", label: "📊 Dashboard" },
+                { href: "/admin/randevular", label: "📅 Randevular" },
+                { href: "/admin/istatistik", label: "📈 İstatistikler" },
                 { href: "/admin/blog", label: "📝 Blog Yazıları" },
                 { href: "/admin/sss", label: "❓ SSS" },
               ].map((l) => (

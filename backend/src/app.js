@@ -10,6 +10,8 @@ const faqRoutes = require("./routes/faqs");
 const adminPostRoutes = require("./routes/admin/posts");
 const adminFaqRoutes = require("./routes/admin/faqs");
 const adminUploadRoutes = require("./routes/admin/upload");
+const adminAppointmentRoutes = require("./routes/admin/appointments");
+const adminStatsRoutes = require("./routes/admin/stats");
 const appointmentRoutes = require("./routes/appointment");
 
 const app = express();
@@ -54,6 +56,8 @@ app.use("/api/appointment", appointmentRoutes);
 app.use("/api/admin/posts", adminPostRoutes);
 app.use("/api/admin/faqs", adminFaqRoutes);
 app.use("/api/admin/upload", adminUploadRoutes);
+app.use("/api/admin/appointments", adminAppointmentRoutes);
+app.use("/api/admin/stats", adminStatsRoutes);
 
 // 404
 app.use((_req, res) => res.status(404).json({ message: "Route not found" }));
