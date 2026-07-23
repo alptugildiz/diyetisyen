@@ -45,6 +45,34 @@ export interface AppointmentListResponse {
   count: number;
 }
 
+export interface Patient {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type BookingStatus = "planlandi" | "geldi" | "gelmedi" | "iptal";
+
+export interface Booking {
+  _id: string;
+  patient: Pick<Patient, "_id" | "firstName" | "lastName" | "phone">;
+  date: string;
+  time: string;
+  status: BookingStatus;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PatientDetail {
+  patient: Patient;
+  bookings: Booking[];
+}
+
 export interface StatsResponse {
   totalRevenue: number;
   totalAppointments: number;

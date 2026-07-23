@@ -10,6 +10,9 @@ import {
 } from "@/lib/api";
 import { formatTRY } from "@/lib/periods";
 import PeriodFilter, { type Range } from "@/components/admin/PeriodFilter";
+import { DateInput } from "@/components/admin/DateTimeInput";
+import PhoneInput from "@/components/admin/PhoneInput";
+import { isValidPhone } from "@/lib/phone";
 import type { Appointment } from "@/types";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -83,6 +86,10 @@ export default function AdminRandevularPage() {
       setError("Ad, soyad, telefon ve tarih zorunludur.");
       return;
     }
+    if (!isValidPhone(phone)) {
+      setError("Geçerli bir telefon girin: 0(5xx)xxx xx xx");
+      return;
+    }
     setSaving(true);
     setError("");
     const data = { firstName, lastName, phone, amount, date, note };
@@ -112,7 +119,9 @@ export default function AdminRandevularPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Randevular</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Tamamlanmış Randevular
+        </h1>
         <button
           onClick={() => {
             resetForm();
@@ -171,10 +180,10 @@ export default function AdminRandevularPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Telefon
               </label>
-              <input
+              <PhoneInput
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                onChange={setPhone}
+                inputClassName="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
               />
             </div>
             <div>
@@ -184,7 +193,8 @@ export default function AdminRandevularPage() {
               <input
                 type="number"
                 min={0}
-                value={amount}
+                value={amount === 0 ? "" : amount}
+                placeholder="0"
                 onChange={(e) => setAmount(Number(e.target.value))}
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
               />
@@ -193,11 +203,10 @@ export default function AdminRandevularPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Randevu Tarihi
               </label>
-              <input
-                type="date"
+              <DateInput
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                onChange={setDate}
+                inputClassName="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
               />
             </div>
           </div>

@@ -39,7 +39,7 @@ router.get("/", async (req, res) => {
     const fromDate = match.date?.$gte ?? null;
     const toDate = match.date?.$lte ?? null;
 
-    const [current, monthlyRaw, weekdayRaw, periodPhones, topRaw] =
+    const [current, monthlyRaw, weekdayRaw, perPhone, topRaw] =
       await Promise.all([
         summarize(match),
         Appointment.aggregate([
@@ -63,7 +63,10 @@ router.get("/", async (req, res) => {
             },
           },
         ]),
-        Appointment.distinct("phone", match),
+        Appointment.aggregate([
+          { $match: match },
+          { $group: { _id: "$phone", count: { $sum: 1 } } },
+        ]),
         Appointment.aggregate([
           { $match: match },
           {
@@ -83,21 +86,12 @@ router.get("/", async (req, res) => {
     const totalRevenue = current.revenue;
     const totalAppointments = current.count;
 
-    // New vs returning: a patient is "new" if their first-ever appointment
-    // falls within the selected period; "returning" if they had an earlier one.
-    let newPatients = 0;
-    let returningPatients = 0;
-    if (periodPhones.length) {
-      const firsts = await Appointment.aggregate([
-        { $match: { phone: { $in: periodPhones } } },
-        { $group: { _id: "$phone", first: { $min: "$date" } } },
-      ]);
-      for (const f of firsts) {
-        if (!fromDate || f.first >= fromDate) newPatients++;
-        else returningPatients++;
-      }
-    }
-    const uniquePatients = periodPhones.length;
+    // New vs returning within the selected period:
+    // returning = patients with more than one completed appointment in the
+    // period; new = patients with exactly one. (new + returning = unique)
+    const returningPatients = perPhone.filter((p) => p.count > 1).length;
+    const newPatients = perPhone.filter((p) => p.count === 1).length;
+    const uniquePatients = perPhone.length;
 
     const avgPerAppointment = totalAppointments
       ? Math.round(totalRevenue / totalAppointments)

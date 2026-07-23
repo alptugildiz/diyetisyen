@@ -50,6 +50,51 @@ export function formatTRY(amount: number): string {
   return `${amount.toLocaleString("tr-TR")} ₺`;
 }
 
+const MONTHS_TR = [
+  "Ocak",
+  "Şubat",
+  "Mart",
+  "Nisan",
+  "Mayıs",
+  "Haziran",
+  "Temmuz",
+  "Ağustos",
+  "Eylül",
+  "Ekim",
+  "Kasım",
+  "Aralık",
+];
+
+// Dropdown options for the last `count` months, newest first.
+export function monthOptions(
+  count = 24,
+): { value: string; label: string }[] {
+  const out: { value: string; label: string }[] = [];
+  const now = new Date();
+  let y = now.getFullYear();
+  let m = now.getMonth(); // 0-based
+  for (let i = 0; i < count; i++) {
+    out.push({
+      value: `${y}-${String(m + 1).padStart(2, "0")}`,
+      label: `${MONTHS_TR[m]} ${y}`,
+    });
+    m--;
+    if (m < 0) {
+      m = 11;
+      y--;
+    }
+  }
+  return out;
+}
+
+// "2026-07" → { from: "2026-07-01", to: "2026-07-31" }
+export function monthToRange(ym: string): { from: string; to: string } {
+  const [y, m] = ym.split("-").map(Number); // m 1-based
+  const p = (n: number) => String(n).padStart(2, "0");
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return { from: `${y}-${p(m)}-01`, to: `${y}-${p(m)}-${p(last)}` };
+}
+
 // Compact for axis ticks: 45000 → "45B", 4500 → "4,5B"
 export function formatK(n: number): string {
   if (n >= 1000) {

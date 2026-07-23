@@ -5,6 +5,9 @@ import type {
   Appointment,
   AppointmentListResponse,
   StatsResponse,
+  Patient,
+  PatientDetail,
+  Booking,
 } from "@/types";
 
 // Server-side (SSR/SSG): Docker internal hostname
@@ -228,4 +231,95 @@ export function adminGetStats(
     `/api/admin/stats${qs ? `?${qs}` : ""}`,
     token,
   );
+}
+
+// ─── Hastalar (Patient) ────────────────────────────────────────
+
+export function adminGetPatients(token: string, q?: string) {
+  const qs = q ? `?q=${encodeURIComponent(q)}` : "";
+  return adminFetch<Patient[]>(`/api/admin/patients${qs}`, token);
+}
+
+export function adminGetPatient(id: string, token: string) {
+  return adminFetch<PatientDetail>(`/api/admin/patients/${id}`, token);
+}
+
+export function adminCreatePatient(data: Partial<Patient>, token: string) {
+  return adminFetch<Patient>("/api/admin/patients", token, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminUpdatePatient(
+  id: string,
+  data: Partial<Patient>,
+  token: string,
+) {
+  return adminFetch<Patient>(`/api/admin/patients/${id}`, token, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminDeletePatient(id: string, token: string) {
+  return adminFetch<{ message: string }>(`/api/admin/patients/${id}`, token, {
+    method: "DELETE",
+  });
+}
+
+// ─── Randevular / Takvim (Booking) ─────────────────────────────
+
+export function adminGetBookings(
+  token: string,
+  params?: { from?: string; to?: string },
+) {
+  const q = new URLSearchParams();
+  if (params?.from) q.set("from", params.from);
+  if (params?.to) q.set("to", params.to);
+  const qs = q.toString();
+  return adminFetch<Booking[]>(
+    `/api/admin/bookings${qs ? `?${qs}` : ""}`,
+    token,
+  );
+}
+
+// data.patient = patientId (string)
+export function adminCreateBooking(
+  data: {
+    patient: string;
+    date: string;
+    time?: string;
+    status?: string;
+    note?: string;
+  },
+  token: string,
+) {
+  return adminFetch<Booking>("/api/admin/bookings", token, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminUpdateBooking(
+  id: string,
+  data: {
+    patient?: string;
+    date?: string;
+    time?: string;
+    status?: string;
+    note?: string;
+  },
+  token: string,
+) {
+  return adminFetch<Booking>(`/api/admin/bookings/${id}`, token, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminDeleteBooking(id: string, token: string) {
+  return adminFetch<{ message: string }>(`/api/admin/bookings/${id}`, token, {
+    method: "DELETE",
+  });
 }

@@ -18,7 +18,7 @@ export default async function AdminLayout({
     <NextAuthProvider>
       <div className="min-h-screen bg-gray-50 flex">
         {/* Sidebar */}
-        <aside className="w-60 bg-white border-r border-gray-200 flex flex-col">
+        <aside className="w-72 bg-white border-r border-gray-200 flex flex-col">
           <div className="p-6 border-b border-gray-200">
             <p className="font-bold text-brand-600 text-lg">Admin Panel</p>
             <p className="text-xs text-gray-400 mt-0.5">
@@ -29,7 +29,9 @@ export default async function AdminLayout({
             <ul className="space-y-1">
               {[
                 { href: "/admin", label: "📊 Dashboard" },
-                { href: "/admin/randevular", label: "📅 Randevular" },
+                { href: "/admin/takvim", label: "📆 Takvim" },
+                { href: "/admin/hastalar", label: "👥 Hastalar" },
+                { href: "/admin/randevular", label: "💰 Tamamlanmış Randevular" },
                 { href: "/admin/istatistik", label: "📈 İstatistikler" },
                 { href: "/admin/blog", label: "📝 Blog Yazıları" },
                 { href: "/admin/sss", label: "❓ SSS" },
@@ -37,7 +39,7 @@ export default async function AdminLayout({
                 <li key={l.href}>
                   <Link
                     href={l.href}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-600 text-sm font-medium transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-brand-50 hover:text-brand-600 text-sm font-medium whitespace-nowrap transition-colors"
                   >
                     {l.label}
                   </Link>
