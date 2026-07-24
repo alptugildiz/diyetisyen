@@ -27,12 +27,14 @@ app.use(
   }),
 );
 
-// Rate limiting
+// Rate limiting (disabled in tests — supertest runs far more than 100
+// requests per suite against the same in-process app)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === "test",
 });
 app.use("/api", limiter);
 
