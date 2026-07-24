@@ -44,7 +44,7 @@ services:
     networks:
       - diyet_network
     ports:
-      - "3000:3000"
+      - "3001:3000"
 
   caddy:
     image: caddy:2-alpine
