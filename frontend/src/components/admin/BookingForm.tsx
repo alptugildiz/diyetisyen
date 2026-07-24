@@ -7,6 +7,8 @@ import {
   adminCreatePatient,
 } from "@/lib/api";
 import { STATUS, STATUS_OPTIONS } from "@/lib/bookingStatus";
+import { CANCEL_REASON, CANCEL_REASON_OPTIONS } from "@/lib/bookingCancelReason";
+import { VISIT_TYPE } from "@/lib/bookingVisitType";
 import {
   DateInput,
   TimeInput,
@@ -14,7 +16,7 @@ import {
 } from "@/components/admin/DateTimeInput";
 import PhoneInput from "@/components/admin/PhoneInput";
 import { isValidPhone } from "@/lib/phone";
-import type { Booking, BookingStatus, Patient } from "@/types";
+import type { Booking, BookingCancelReason, BookingStatus, Patient } from "@/types";
 
 const inputCls =
   "w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400";
@@ -54,13 +56,21 @@ export default function BookingForm({
   const [status, setStatus] = useState<BookingStatus>(
     initial?.status ?? "planlandi",
   );
+  const [cancelReason, setCancelReason] = useState<BookingCancelReason | "">(
+    initial?.cancelReason ?? "",
+  );
   const [note, setNote] = useState(initial?.note ?? "");
+  const needsCancelReason = status === "iptal" || status === "gelmedi";
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const handleSave = async () => {
     if (!date) {
       setError("Tarih zorunludur.");
+      return;
+    }
+    if (needsCancelReason && !cancelReason) {
+      setError("İptal veya gelmeme durumunda neden seçmelisiniz.");
       return;
     }
     setSaving(true);
@@ -94,7 +104,14 @@ export default function BookingForm({
         return;
       }
 
-      const payload = { patient: pid, date, time, status, note };
+      const payload = {
+        patient: pid,
+        date,
+        time,
+        status,
+        cancelReason: needsCancelReason ? cancelReason || null : null,
+        note,
+      };
       const saved = initial
         ? await adminUpdateBooking(initial._id, payload, token)
         : await adminCreateBooking(payload, token);
@@ -199,6 +216,33 @@ export default function BookingForm({
           }))}
         />
       </div>
+
+      {needsCancelReason && (
+        <div>
+          <label className={labelCls}>Neden</label>
+          <SelectInput
+            value={cancelReason}
+            onChange={(v) => setCancelReason(v as BookingCancelReason)}
+            inputClassName={inputCls}
+            placeholder="Neden seçin"
+            options={CANCEL_REASON_OPTIONS.map((r) => ({
+              value: r,
+              label: CANCEL_REASON[r].label,
+            }))}
+          />
+        </div>
+      )}
+
+      {initial?.visitType && (
+        <div>
+          <span className={labelCls}>Ziyaret Tipi</span>
+          <span
+            className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${VISIT_TYPE[initial.visitType].badge}`}
+          >
+            {VISIT_TYPE[initial.visitType].label}
+          </span>
+        </div>
+      )}
 
       <div>
         <label className={labelCls}>Not</label>
