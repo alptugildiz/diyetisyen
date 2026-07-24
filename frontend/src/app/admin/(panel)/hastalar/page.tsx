@@ -10,7 +10,9 @@ import {
 } from "@/lib/api";
 import { isValidPhone } from "@/lib/phone";
 import PhoneInput from "@/components/admin/PhoneInput";
-import type { Patient } from "@/types";
+import { SelectInput } from "@/components/admin/DateTimeInput";
+import { PATIENT_SOURCE, PATIENT_SOURCE_OPTIONS } from "@/lib/patientSource";
+import type { Patient, PatientSource } from "@/types";
 
 const inputCls =
   "w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400";
@@ -28,6 +30,7 @@ export default function AdminHastalarPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [source, setSource] = useState<PatientSource | "">("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -50,6 +53,7 @@ export default function AdminHastalarPage() {
     setFirstName("");
     setLastName("");
     setPhone("");
+    setSource("");
     setNote("");
     setShowForm(false);
     setError("");
@@ -68,7 +72,7 @@ export default function AdminHastalarPage() {
     setError("");
     try {
       const created = await adminCreatePatient(
-        { firstName, lastName, phone, note },
+        { firstName, lastName, phone, source: source || null, note },
         token,
       );
       setPatients((prev) => [created, ...prev]);
@@ -123,7 +127,7 @@ export default function AdminHastalarPage() {
       {showForm && (
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 space-y-4">
           <h2 className="font-semibold text-gray-900">Yeni Hasta</h2>
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-4 gap-4">
             <div>
               <label className={labelCls}>Ad</label>
               <input
@@ -143,6 +147,19 @@ export default function AdminHastalarPage() {
             <div>
               <label className={labelCls}>Telefon</label>
               <PhoneInput value={phone} onChange={setPhone} inputClassName={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Kaynak (opsiyonel)</label>
+              <SelectInput
+                value={source}
+                onChange={(v) => setSource(v as PatientSource)}
+                inputClassName={inputCls}
+                placeholder="Nereden geldi?"
+                options={PATIENT_SOURCE_OPTIONS.map((s) => ({
+                  value: s,
+                  label: PATIENT_SOURCE[s].label,
+                }))}
+              />
             </div>
           </div>
           <div>

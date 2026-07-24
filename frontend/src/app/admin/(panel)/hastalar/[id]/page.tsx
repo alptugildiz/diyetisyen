@@ -9,8 +9,12 @@ import {
   adminDeleteBooking,
 } from "@/lib/api";
 import { STATUS } from "@/lib/bookingStatus";
+import { VISIT_TYPE } from "@/lib/bookingVisitType";
+import { CANCEL_REASON } from "@/lib/bookingCancelReason";
+import { PROCESS_STATUS, PROCESS_STATUS_OPTIONS } from "@/lib/patientProcessStatus";
+import { SelectInput } from "@/components/admin/DateTimeInput";
 import BookingForm from "@/components/admin/BookingForm";
-import type { Booking, Patient } from "@/types";
+import type { Booking, Patient, PatientProcessStatus } from "@/types";
 
 const inputCls =
   "w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400";
@@ -69,6 +73,16 @@ export default function PatientDetailPage({
     }
   };
 
+  const changeProcessStatus = async (status: PatientProcessStatus) => {
+    if (!patient) return;
+    const updated = await adminUpdatePatient(
+      patient._id,
+      { processStatus: status },
+      token,
+    );
+    setPatient(updated);
+  };
+
   const handleDeleteBooking = async (b: Booking) => {
     if (!confirm("Bu randevu silinsin mi?")) return;
     await adminDeleteBooking(b._id, token);
@@ -104,15 +118,26 @@ export default function PatientDetailPage({
             </h1>
             <p className="text-gray-500 mt-1">☎ {patient.phone}</p>
           </div>
-          <button
-            onClick={() => {
-              setEditing(null);
-              setShowForm(true);
-            }}
-            className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors"
-          >
-            + Randevu Ekle
-          </button>
+          <div className="flex items-center gap-3">
+            <SelectInput
+              value={patient.processStatus}
+              onChange={(v) => changeProcessStatus(v as PatientProcessStatus)}
+              inputClassName="border border-gray-300 rounded-xl px-3 py-2 text-sm"
+              options={PROCESS_STATUS_OPTIONS.map((s) => ({
+                value: s,
+                label: PROCESS_STATUS[s].label,
+              }))}
+            />
+            <button
+              onClick={() => {
+                setEditing(null);
+                setShowForm(true);
+              }}
+              className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors"
+            >
+              + Randevu Ekle
+            </button>
+          </div>
         </div>
 
         <div className="mt-5">
@@ -167,7 +192,19 @@ export default function PatientDetailPage({
                   ) : (
                     <p className="text-sm text-gray-300">not yok</p>
                   )}
+                  {b.cancelReason && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Neden: {CANCEL_REASON[b.cancelReason].label}
+                    </p>
+                  )}
                 </div>
+                {b.visitType && (
+                  <span
+                    className={`text-xs font-medium px-2.5 py-1 rounded-full ${VISIT_TYPE[b.visitType].badge}`}
+                  >
+                    {VISIT_TYPE[b.visitType].label}
+                  </span>
+                )}
                 <span
                   className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS[b.status].badge}`}
                 >
