@@ -24,10 +24,15 @@ import {
   monthsBetween,
 } from "@/lib/periods";
 import PeriodFilter, { type Range } from "@/components/admin/PeriodFilter";
+import { PATIENT_SOURCE } from "@/lib/patientSource";
+import { PROCESS_STATUS } from "@/lib/patientProcessStatus";
+import { CANCEL_REASON } from "@/lib/bookingCancelReason";
 import type { StatsResponse } from "@/types";
 
 const EMERALD = "#10b981";
 const INDIGO = "#6366f1";
+const AMBER = "#f59e0b";
+const SLATE = "#94a3b8";
 
 // ─── Small presentational helpers ──────────────────────────────
 
@@ -196,6 +201,36 @@ export default function AdminIstatistikPage() {
     : [];
 
   const maxTopRevenue = stats?.topPatients[0]?.revenue ?? 1;
+
+  const PROCESS_STATUS_COLOR = {
+    aktif: INDIGO,
+    tamamladi: EMERALD,
+    birakti: SLATE,
+  } as const;
+  const processSplit =
+    stats?.retention.processStatusBreakdown
+      .filter((r) => r.count > 0)
+      .map((r) => ({
+        name: PROCESS_STATUS[r.status].label,
+        value: r.count,
+        color: PROCESS_STATUS_COLOR[r.status],
+      })) ?? [];
+
+  const sourceData =
+    stats?.sourceBreakdown
+      .filter((r) => r.count > 0)
+      .map((r) => ({
+        name: PATIENT_SOURCE[r.source].label,
+        count: r.count,
+      })) ?? [];
+
+  const cancelReasonData =
+    stats?.cancelReasonBreakdown
+      .filter((r) => r.count > 0)
+      .map((r) => ({
+        name: CANCEL_REASON[r.reason].label,
+        count: r.count,
+      })) ?? [];
 
   return (
     <div>
@@ -538,6 +573,182 @@ export default function AdminIstatistikPage() {
               ))}
             </div>
           </ChartCard>
+
+          {/* Retention */}
+          <div>
+            <h2 className="font-semibold text-gray-900 mb-3">Devamlılık</h2>
+            <div className="grid lg:grid-cols-3 gap-4 mb-6">
+              <StatTile
+                label="İlk → İkinci Geçiş Oranı"
+                value={
+                  stats.retention.firstToSecondRate === null
+                    ? "—"
+                    : `%${stats.retention.firstToSecondRate}`
+                }
+                caption="dönemde ilk görüşmesi olan danışanlar arasında"
+              />
+              <StatTile
+                label="Ortalama Görüşme Sayısı"
+                value={String(stats.retention.avgFollowUpCount)}
+                caption="hasta başına, gerçekleşen randevular"
+              />
+              <StatTile
+                label="Ortalama Takip Süresi"
+                value={`${stats.retention.avgFollowUpSpanDays} gün`}
+                caption="ilk ve son randevu arasında"
+              />
+            </div>
+            {processSplit.length > 0 && (
+              <ChartCard
+                title="Süreç Durumu Dağılımı"
+                subtitle="Dönemde ilk görüşmesi olan danışanların güncel durumu"
+              >
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={processSplit}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={58}
+                      outerRadius={82}
+                      paddingAngle={2}
+                      stroke="none"
+                      isAnimationActive={false}
+                    >
+                      {processSplit.map((e) => (
+                        <Cell key={e.name} fill={e.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<ChartTooltip />} isAnimationActive={false} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="mt-4 space-y-2">
+                  {processSplit.map((e) => (
+                    <div
+                      key={e.name}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <span className="flex items-center gap-2 text-gray-600">
+                        <span
+                          className="w-3 h-3 rounded-full"
+                          style={{ background: e.color }}
+                        />
+                        {e.name}
+                      </span>
+                      <span className="font-semibold text-gray-900 tabular-nums">
+                        {e.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </ChartCard>
+            )}
+          </div>
+
+          {/* Source + cancellation breakdown */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            <ChartCard
+              title="Kaynak Dağılımı"
+              subtitle="Dönemde ilk görüşmesi olan danışanlar nereden geldi"
+            >
+              {sourceData.length === 0 ? (
+                <p className="text-gray-400 text-sm">Bu dönemde veri yok.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart
+                    data={sourceData}
+                    layout="vertical"
+                    margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#f1f5f9"
+                      horizontal={false}
+                    />
+                    <XAxis
+                      type="number"
+                      tick={axisTick}
+                      tickLine={false}
+                      axisLine={{ stroke: "#e5e7eb" }}
+                      allowDecimals={false}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={axisTick}
+                      tickLine={false}
+                      axisLine={false}
+                      width={140}
+                    />
+                    <Tooltip
+                      content={<ChartTooltip />}
+                      cursor={{ fill: "#f8fafc" }}
+                      isAnimationActive={false}
+                    />
+                    <Bar
+                      dataKey="count"
+                      name="Danışan"
+                      fill={INDIGO}
+                      radius={[0, 4, 4, 0]}
+                      maxBarSize={22}
+                      isAnimationActive={false}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </ChartCard>
+
+            <ChartCard
+              title="İptal & Gelmeme Analizi"
+              subtitle="Dönemdeki iptal/gelmeme kayıtları, nedene göre"
+            >
+              {cancelReasonData.length === 0 ? (
+                <p className="text-gray-400 text-sm">Bu dönemde veri yok.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart
+                    data={cancelReasonData}
+                    layout="vertical"
+                    margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#f1f5f9"
+                      horizontal={false}
+                    />
+                    <XAxis
+                      type="number"
+                      tick={axisTick}
+                      tickLine={false}
+                      axisLine={{ stroke: "#e5e7eb" }}
+                      allowDecimals={false}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={axisTick}
+                      tickLine={false}
+                      axisLine={false}
+                      width={140}
+                    />
+                    <Tooltip
+                      content={<ChartTooltip />}
+                      cursor={{ fill: "#f8fafc" }}
+                      isAnimationActive={false}
+                    />
+                    <Bar
+                      dataKey="count"
+                      name="Kayıt"
+                      fill={AMBER}
+                      radius={[0, 4, 4, 0]}
+                      maxBarSize={22}
+                      isAnimationActive={false}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </ChartCard>
+          </div>
         </div>
       )}
     </div>
