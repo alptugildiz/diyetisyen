@@ -45,17 +45,41 @@ export interface AppointmentListResponse {
   count: number;
 }
 
+export type PatientSource =
+  | "instagram"
+  | "google"
+  | "dis_hekimi"
+  | "danisan_tavsiyesi"
+  | "web_sitesi"
+  | "klinik_ici"
+  | "diger";
+
+export type PatientSourceKey = PatientSource | "belirtilmemis";
+
+export type PatientProcessStatus = "aktif" | "tamamladi" | "birakti";
+
 export interface Patient {
   _id: string;
   firstName: string;
   lastName: string;
   phone: string;
+  source: PatientSource | null;
+  processStatus: PatientProcessStatus;
   note: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export type BookingStatus = "planlandi" | "geldi" | "gelmedi" | "iptal";
+export type BookingVisitType = "ilk_gorusme" | "kontrol";
+export type BookingCancelReason =
+  | "tarih_uygun_degil"
+  | "ucret"
+  | "unuttu"
+  | "saglik_problemi"
+  | "iletisim_kurulamadi"
+  | "baska_hizmet"
+  | "belirtilmedi";
 
 export interface Booking {
   _id: string;
@@ -63,6 +87,8 @@ export interface Booking {
   date: string;
   time: string;
   status: BookingStatus;
+  visitType: BookingVisitType | null;
+  cancelReason: BookingCancelReason | null;
   note: string;
   createdAt: string;
   updatedAt: string;
@@ -90,5 +116,35 @@ export interface StatsResponse {
     phone: string;
     revenue: number;
     visits: number;
+  }[];
+  monthlySummary: {
+    totalBookings: number;
+    totalBookingsChangePct: number | null;
+    completed: number;
+    completedChangePct: number | null;
+    cancelled: number;
+    cancelledChangePct: number | null;
+    noShow: number;
+    noShowChangePct: number | null;
+    newPatients: number;
+    newPatientsChangePct: number | null;
+    followUps: number;
+    followUpsChangePct: number | null;
+    revenue: number;
+    revenueChangePct: number | null;
+  };
+  retention: {
+    firstToSecondRate: number | null;
+    avgFollowUpCount: number;
+    avgFollowUpSpanDays: number;
+    processStatusBreakdown: {
+      status: PatientProcessStatus;
+      count: number;
+    }[];
+  };
+  sourceBreakdown: { source: PatientSourceKey; count: number }[];
+  cancelReasonBreakdown: {
+    reason: BookingCancelReason;
+    count: number;
   }[];
 }

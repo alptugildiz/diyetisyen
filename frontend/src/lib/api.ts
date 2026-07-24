@@ -291,6 +291,7 @@ export function adminCreateBooking(
     date: string;
     time?: string;
     status?: string;
+    cancelReason?: string | null;
     note?: string;
   },
   token: string,
@@ -308,6 +309,7 @@ export function adminUpdateBooking(
     date?: string;
     time?: string;
     status?: string;
+    cancelReason?: string | null;
     note?: string;
   },
   token: string,
