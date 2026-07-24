@@ -9,10 +9,23 @@ router.use(protect);
 
 const PHONE_RE = /^0\(5\d{2}\)\d{3} \d{2} \d{2}$/; // 0(5xx)xxx xx xx
 
+const SOURCES = [
+  "instagram",
+  "google",
+  "dis_hekimi",
+  "danisan_tavsiyesi",
+  "web_sitesi",
+  "klinik_ici",
+  "diger",
+];
+const PROCESS_STATUSES = ["aktif", "tamamladi", "birakti"];
+
 const patientSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   phone: z.string().regex(PHONE_RE, "Geçersiz telefon formatı"),
+  source: z.enum(SOURCES).optional().nullable(),
+  processStatus: z.enum(PROCESS_STATUSES).optional(),
   note: z.string().optional(),
 });
 
