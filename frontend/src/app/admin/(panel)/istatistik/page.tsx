@@ -31,14 +31,26 @@ const INDIGO = "#6366f1";
 
 // ─── Small presentational helpers ──────────────────────────────
 
-function DeltaChip({ pct }: { pct: number | null }) {
+// `neutral` renders a plain gray chip (direction + magnitude only, no
+// good/bad color) — used for metrics like iptal/gelmedi where a colored
+// up/down arrow would read as a judgment rather than information.
+function DeltaChip({
+  pct,
+  neutral,
+}: {
+  pct: number | null;
+  neutral?: boolean;
+}) {
   if (pct === null) return null;
   const up = pct >= 0;
+  const tone = neutral
+    ? "bg-gray-100 text-gray-600"
+    : up
+      ? "bg-emerald-50 text-emerald-700"
+      : "bg-red-50 text-red-600";
   return (
     <span
-      className={`inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
-        up ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"
-      }`}
+      className={`inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${tone}`}
     >
       {up ? "▲" : "▼"} %{Math.abs(pct)}
     </span>
@@ -49,12 +61,14 @@ function StatTile({
   label,
   value,
   delta,
+  deltaNeutral,
   caption,
   accent,
 }: {
   label: string;
   value: string;
   delta?: number | null;
+  deltaNeutral?: boolean;
   caption?: string;
   accent?: boolean;
 }) {
@@ -62,7 +76,9 @@ function StatTile({
     <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col justify-between">
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm text-gray-500">{label}</p>
-        {delta !== undefined && <DeltaChip pct={delta ?? null} />}
+        {delta !== undefined && (
+          <DeltaChip pct={delta ?? null} neutral={deltaNeutral} />
+        )}
       </div>
       <p
         className={`text-2xl font-bold mt-2 tabular-nums ${
@@ -223,6 +239,58 @@ export default function AdminIstatistikPage() {
               value={formatTRY(stats.avgPerPatient)}
               caption={`randevu başına ${formatTRY(stats.avgPerAppointment)}`}
             />
+          </div>
+
+          {/* Monthly summary (Booking-based) */}
+          <div>
+            <h2 className="font-semibold text-gray-900 mb-3">Aylık Özet</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatTile
+                label="Toplam Randevu"
+                value={String(stats.monthlySummary.totalBookings)}
+                delta={stats.monthlySummary.totalBookingsChangePct}
+                caption="önceki döneme göre"
+              />
+              <StatTile
+                label="Gerçekleşen"
+                value={String(stats.monthlySummary.completed)}
+                delta={stats.monthlySummary.completedChangePct}
+                caption="önceki döneme göre"
+              />
+              <StatTile
+                label="İptal"
+                value={String(stats.monthlySummary.cancelled)}
+                delta={stats.monthlySummary.cancelledChangePct}
+                deltaNeutral
+                caption="önceki döneme göre"
+              />
+              <StatTile
+                label="Gelmedi"
+                value={String(stats.monthlySummary.noShow)}
+                delta={stats.monthlySummary.noShowChangePct}
+                deltaNeutral
+                caption="önceki döneme göre"
+              />
+              <StatTile
+                label="Yeni Danışan"
+                value={String(stats.monthlySummary.newPatients)}
+                delta={stats.monthlySummary.newPatientsChangePct}
+                caption="önceki döneme göre"
+              />
+              <StatTile
+                label="Kontrol Randevusu"
+                value={String(stats.monthlySummary.followUps)}
+                delta={stats.monthlySummary.followUpsChangePct}
+                caption="önceki döneme göre"
+              />
+              <StatTile
+                label="Toplam Gelir"
+                value={formatTRY(stats.monthlySummary.revenue)}
+                delta={stats.monthlySummary.revenueChangePct}
+                caption="önceki döneme göre"
+                accent
+              />
+            </div>
           </div>
 
           {/* Revenue trend + patient split */}
