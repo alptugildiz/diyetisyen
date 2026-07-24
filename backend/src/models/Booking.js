@@ -15,6 +15,27 @@ const bookingSchema = new mongoose.Schema(
       enum: ["planlandi", "geldi", "gelmedi", "iptal"],
       default: "planlandi",
     },
+    // Sunucu tarafında hesaplanır (bkz. routes/admin/bookings.js) — client
+    // tarafından gönderilse bile Zod şeması tarafından yok sayılır.
+    visitType: {
+      type: String,
+      enum: ["ilk_gorusme", "kontrol"],
+      default: null,
+    },
+    // Sadece status "iptal" veya "gelmedi" olduğunda anlamlıdır.
+    cancelReason: {
+      type: String,
+      enum: [
+        "tarih_uygun_degil",
+        "ucret",
+        "unuttu",
+        "saglik_problemi",
+        "iletisim_kurulamadi",
+        "baska_hizmet",
+        "belirtilmedi",
+      ],
+      default: null,
+    },
     note: { type: String, default: "", trim: true }, // randevuya özel not
   },
   { timestamps: true },

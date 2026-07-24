@@ -6,13 +6,28 @@ const { protect } = require("../../middleware/auth");
 const router = express.Router();
 router.use(protect);
 
+const CANCEL_REASONS = [
+  "tarih_uygun_degil",
+  "ucret",
+  "unuttu",
+  "saglik_problemi",
+  "iletisim_kurulamadi",
+  "baska_hizmet",
+  "belirtilmedi",
+];
+
 const bookingSchema = z.object({
   patient: z.string().min(1),
   date: z.string().min(1),
   time: z.string().optional(),
   status: z.enum(["planlandi", "geldi", "gelmedi", "iptal"]).optional(),
+  cancelReason: z.enum(CANCEL_REASONS).optional().nullable(),
   note: z.string().optional(),
 });
+
+function needsCancelReason(status) {
+  return status === "iptal" || status === "gelmedi";
+}
 
 // Build a { date: { $gte, $lte } } filter from ?from&to query params
 function buildDateFilter(query) {
@@ -42,9 +57,30 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const data = bookingSchema.parse(req.body);
+    const status = data.status ?? "planlandi";
+
+    if (needsCancelReason(status) && !data.cancelReason) {
+      return res.status(400).json({
+        message: "Validation error",
+        errors: [
+          {
+            path: ["cancelReason"],
+            message: "İptal veya gelmeme durumunda neden zorunludur.",
+          },
+        ],
+      });
+    }
+
+    // Ziyaret tipi her zaman sunucuda hesaplanır: hastanın bu klinikteki
+    // ilk kaydıysa "ilk_gorusme", aksi halde "kontrol".
+    const priorCount = await Booking.countDocuments({ patient: data.patient });
+    const visitType = priorCount === 0 ? "ilk_gorusme" : "kontrol";
+
     const created = await Booking.create({
       ...data,
       date: new Date(data.date),
+      cancelReason: needsCancelReason(status) ? data.cancelReason : null,
+      visitType,
     });
     const booking = await created.populate(
       "patient",
@@ -66,11 +102,33 @@ router.put("/:id", async (req, res) => {
   try {
     const data = bookingSchema.partial().parse(req.body);
     if (data.date) data.date = new Date(data.date);
+
+    const existing = await Booking.findById(req.params.id);
+    if (!existing)
+      return res.status(404).json({ message: "Booking not found" });
+
+    const resultingStatus = data.status ?? existing.status;
+    const resultingReason =
+      data.cancelReason !== undefined ? data.cancelReason : existing.cancelReason;
+
+    if (needsCancelReason(resultingStatus) && !resultingReason) {
+      return res.status(400).json({
+        message: "Validation error",
+        errors: [
+          {
+            path: ["cancelReason"],
+            message: "İptal veya gelmeme durumunda neden zorunludur.",
+          },
+        ],
+      });
+    }
+    // Durum artık iptal/gelmedi değilse eski nedeni temizle.
+    if (!needsCancelReason(resultingStatus)) data.cancelReason = null;
+
     const booking = await Booking.findByIdAndUpdate(req.params.id, data, {
       new: true,
       runValidators: true,
     }).populate("patient", "firstName lastName phone");
-    if (!booking) return res.status(404).json({ message: "Booking not found" });
     res.json(booking);
   } catch (err) {
     if (err.name === "ZodError")
@@ -85,7 +143,8 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const booking = await Booking.findByIdAndDelete(req.params.id);
-    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (!booking)
+      return res.status(404).json({ message: "Booking not found" });
     res.json({ message: "Booking deleted" });
   } catch {
     res.status(500).json({ message: "Server error" });
