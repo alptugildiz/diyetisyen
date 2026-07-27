@@ -1,12 +1,22 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:21collective.co)",
-      "Bash(mv corridor_02_1x1.jpg trakya-diyetisyen-1.jpg)",
-      "Bash(mv corridor_1x1.jpg trakya-diyetisyen-2.jpg)",
-      "Bash(mv indoor_03_1x1.jpg trakya-diyetisyen-3.jpg)",
-      "Bash(mv indoor_04_1x1.jpg trakya-diyetisyen-4.jpg)",
-      "Bash(mv indoor_1x1.jpg trakya-diyetisyen-5.jpg)"
+      "Bash(gh --version)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "Bash(gh api *)",
+      "Bash(git clone *)",
+      "Bash(rm *)",
+      "Bash(docker --version)",
+      "Bash(docker compose *)",
+      "Bash(cp .env.example .env)",
+      "Bash(cp backend/.env.example backend/.env)",
+      "Bash(openssl rand *)",
+      "Bash(sed -i 's|NEXTAUTH_SECRET=replace_with_a_long_random_string|NEXTAUTH_SECRET=__TRACKED_VAR__|' .env)",
+      "Bash(sed -i \"s|NEXTAUTH_URL=https://example.com|NEXTAUTH_URL=http://localhost:3000|\" .env)",
+      "Bash(powershell -NoProfile -Command \"Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -Property LocalAddress,LocalPort,State,OwningProcess | Format-Table -AutoSize\" 2>&1)",
+      "Bash(powershell -NoProfile -Command \"Get-Process -Id 37084 | Select-Object -Property Id,ProcessName,Path | Format-List\")",
+      "Bash(powershell -NoProfile -Command \"Get-NetTCPConnection -LocalPort 80 -ErrorAction SilentlyContinue | Select-Object -Property LocalPort,State,OwningProcess | Format-Table -AutoSize\")"
     ]
   }
 }
