@@ -4,6 +4,8 @@ import type {
   Faq,
   Appointment,
   AppointmentListResponse,
+  Expense,
+  ExpenseListResponse,
   StatsResponse,
   Patient,
   PatientDetail,
@@ -219,6 +221,44 @@ export function adminDeleteAppointment(id: string, token: string) {
   );
 }
 
+export function adminGetExpenses(
+  token: string,
+  params?: { from?: string; to?: string },
+) {
+  const q = new URLSearchParams();
+  if (params?.from) q.set("from", params.from);
+  if (params?.to) q.set("to", params.to);
+  const qs = q.toString();
+  return adminFetch<ExpenseListResponse>(
+    `/api/admin/expenses${qs ? `?${qs}` : ""}`,
+    token,
+  );
+}
+
+export function adminCreateExpense(data: Partial<Expense>, token: string) {
+  return adminFetch<Expense>("/api/admin/expenses", token, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminUpdateExpense(
+  id: string,
+  data: Partial<Expense>,
+  token: string,
+) {
+  return adminFetch<Expense>(`/api/admin/expenses/${id}`, token, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminDeleteExpense(id: string, token: string) {
+  return adminFetch<{ message: string }>(`/api/admin/expenses/${id}`, token, {
+    method: "DELETE",
+  });
+}
+
 export function adminGetStats(
   token: string,
   params?: { from?: string; to?: string },
@@ -293,6 +333,11 @@ export function adminCreateBooking(
     status?: string;
     cancelReason?: string | null;
     note?: string;
+    completionPayment?: {
+      amount: number;
+      paymentMethod: "nakit" | "kart";
+      documentNumber?: string;
+    };
   },
   token: string,
 ) {
@@ -311,6 +356,11 @@ export function adminUpdateBooking(
     status?: string;
     cancelReason?: string | null;
     note?: string;
+    completionPayment?: {
+      amount: number;
+      paymentMethod: "nakit" | "kart";
+      documentNumber?: string;
+    };
   },
   token: string,
 ) {

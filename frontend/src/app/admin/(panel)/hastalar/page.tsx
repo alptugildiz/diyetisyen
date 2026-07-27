@@ -105,7 +105,7 @@ export default function AdminHastalarPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Hastalar</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Danışanlar</h1>
         <button
           onClick={() => {
             resetForm();
@@ -113,7 +113,7 @@ export default function AdminHastalarPage() {
           }}
           className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
         >
-          + Yeni Hasta
+          + Yeni Danışan
         </button>
       </div>
 
@@ -126,7 +126,7 @@ export default function AdminHastalarPage() {
 
       {showForm && (
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 space-y-4">
-          <h2 className="font-semibold text-gray-900">Yeni Hasta</h2>
+          <h2 className="font-semibold text-gray-900">Yeni Danışan</h2>
           <div className="grid sm:grid-cols-4 gap-4">
             <div>
               <label className={labelCls}>Ad</label>
@@ -194,7 +194,7 @@ export default function AdminHastalarPage() {
         <p className="text-gray-400">Yükleniyor…</p>
       ) : filtered.length === 0 ? (
         <p className="text-gray-400">
-          {q ? "Eşleşen hasta yok." : "Henüz hasta yok."}
+          {q ? "Eşleşen danışan yok." : "Henüz danışan yok."}
         </p>
       ) : (
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">

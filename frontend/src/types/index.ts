@@ -33,6 +33,8 @@ export interface Appointment {
   lastName: string;
   phone: string;
   amount: number;
+  paymentMethod: "nakit" | "kart" | null;
+  documentNumber: string;
   date: string;
   note: string;
   createdAt: string;
@@ -41,6 +43,24 @@ export interface Appointment {
 
 export interface AppointmentListResponse {
   appointments: Appointment[];
+  total: number;
+  count: number;
+}
+
+export type ExpenseCategory = "vergi" | "muhasebe" | "bagkur" | "diger";
+
+export interface Expense {
+  _id: string;
+  category: ExpenseCategory;
+  amount: number;
+  date: string;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ExpenseListResponse {
+  expenses: Expense[];
   total: number;
   count: number;
 }
@@ -101,6 +121,12 @@ export interface PatientDetail {
 
 export interface StatsResponse {
   totalRevenue: number;
+  totalExpenses: number;
+  netRevenue: number;
+  paymentBreakdown: {
+    method: "nakit" | "kart" | "belirtilmedi";
+    total: number;
+  }[];
   totalAppointments: number;
   uniquePatients: number;
   avgPerAppointment: number;

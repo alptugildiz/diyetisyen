@@ -7,13 +7,14 @@ import {
   adminCreateAppointment,
   adminUpdateAppointment,
   adminDeleteAppointment,
+  adminGetPatients,
 } from "@/lib/api";
 import { formatTRY } from "@/lib/periods";
 import PeriodFilter, { type Range } from "@/components/admin/PeriodFilter";
-import { DateInput } from "@/components/admin/DateTimeInput";
+import { DateInput, SelectInput } from "@/components/admin/DateTimeInput";
 import PhoneInput from "@/components/admin/PhoneInput";
 import { isValidPhone } from "@/lib/phone";
-import type { Appointment } from "@/types";
+import type { Appointment, Patient } from "@/types";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -26,13 +27,18 @@ export default function AdminRandevularPage() {
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<Range | null>(null);
+  const [patients, setPatients] = useState<Patient[]>([]);
 
   // Form state
   const [editId, setEditId] = useState<string | null>(null);
+  const [patientId, setPatientId] = useState("");
+  const [manualPatient, setManualPatient] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState<"nakit" | "kart">("nakit");
+  const [documentNumber, setDocumentNumber] = useState("");
   const [date, setDate] = useState(today());
   const [note, setNote] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -57,12 +63,20 @@ export default function AdminRandevularPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, range]);
 
+  useEffect(() => {
+    if (token) adminGetPatients(token).then(setPatients);
+  }, [token]);
+
   const resetForm = () => {
     setEditId(null);
+    setPatientId("");
+    setManualPatient(false);
     setFirstName("");
     setLastName("");
     setPhone("");
     setAmount(0);
+    setPaymentMethod("nakit");
+    setDocumentNumber("");
     setDate(today());
     setNote("");
     setShowForm(false);
@@ -70,18 +84,37 @@ export default function AdminRandevularPage() {
   };
 
   const handleEdit = (a: Appointment) => {
+    const patient = patients.find((p) => p.phone === a.phone);
     setEditId(a._id);
+    setPatientId(patient?._id ?? "");
+    setManualPatient(!patient);
     setFirstName(a.firstName);
     setLastName(a.lastName);
     setPhone(a.phone);
     setAmount(a.amount);
+    setPaymentMethod(a.paymentMethod ?? "nakit");
+    setDocumentNumber(a.documentNumber ?? "");
     setDate(a.date.slice(0, 10));
     setNote(a.note ?? "");
     setShowForm(true);
     setError("");
   };
 
+  const handlePatientChange = (id: string) => {
+    const patient = patients.find((p) => p._id === id);
+    setPatientId(id);
+    if (!patient) return;
+    setFirstName(patient.firstName);
+    setLastName(patient.lastName);
+    setPhone(patient.phone);
+    setError("");
+  };
+
   const handleSave = async () => {
+    if (!manualPatient && !patientId) {
+      setError("Lütfen kayıtlı bir danışan seçin.");
+      return;
+    }
     if (!firstName || !lastName || !phone || !date) {
       setError("Ad, soyad, telefon ve tarih zorunludur.");
       return;
@@ -92,7 +125,16 @@ export default function AdminRandevularPage() {
     }
     setSaving(true);
     setError("");
-    const data = { firstName, lastName, phone, amount, date, note };
+    const data = {
+      firstName,
+      lastName,
+      phone,
+      amount,
+      paymentMethod,
+      documentNumber,
+      date,
+      note,
+    };
     try {
       if (editId) {
         await adminUpdateAppointment(editId, data, token);
@@ -120,7 +162,7 @@ export default function AdminRandevularPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
-          Tamamlanmış Randevular
+          Randevu İşlemleri
         </h1>
         <button
           onClick={() => {
@@ -129,14 +171,14 @@ export default function AdminRandevularPage() {
           }}
           className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
         >
-          + Yeni Randevu
+          + Gelir Ekle
         </button>
       </div>
 
       <PeriodFilter onChange={setRange} />
 
       {/* Summary strip */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="grid sm:grid-cols-2 gap-4 mb-8">
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <p className="text-sm text-gray-500">Toplam Kazanç</p>
           <p className="text-2xl font-bold text-brand-600 mt-1">
@@ -156,36 +198,73 @@ export default function AdminRandevularPage() {
             {editId ? "Randevu Düzenle" : "Yeni Randevu"}
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ad
-              </label>
-              <input
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-              />
+            <div className="sm:col-span-2">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Danışan
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setManualPatient((current) => !current);
+                    setPatientId("");
+                    setFirstName("");
+                    setLastName("");
+                    setPhone("");
+                  }}
+                  className="text-xs text-brand-600 hover:underline"
+                >
+                  {manualPatient ? "Kayıtlı danışandan seç" : "Manuel bilgi gir"}
+                </button>
+              </div>
+              {!manualPatient && (
+                <SelectInput
+                  value={patientId}
+                  onChange={handlePatientChange}
+                  searchable
+                  placeholder="Danışan adı veya telefonla ara"
+                  inputClassName="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                  options={patients.map((patient) => ({
+                    value: patient._id,
+                    label: `${patient.firstName} ${patient.lastName} · ${patient.phone}`,
+                  }))}
+                />
+              )}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Soyad
-              </label>
-              <input
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Telefon
-              </label>
-              <PhoneInput
-                value={phone}
-                onChange={setPhone}
-                inputClassName="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-              />
-            </div>
+            {manualPatient && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ad
+                  </label>
+                  <input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Soyad
+                  </label>
+                  <input
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefon
+                  </label>
+                  <PhoneInput
+                    value={phone}
+                    onChange={setPhone}
+                    inputClassName="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                  />
+                </div>
+              </>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Alınan Ücret (₺)
@@ -196,6 +275,33 @@ export default function AdminRandevularPage() {
                 value={amount === 0 ? "" : amount}
                 placeholder="0"
                 onChange={(e) => setAmount(Number(e.target.value))}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Ödeme Yöntemi
+              </label>
+              <SelectInput
+                value={paymentMethod}
+                onChange={(value) =>
+                  setPaymentMethod(value as "nakit" | "kart")
+                }
+                inputClassName="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                options={[
+                  { value: "nakit", label: "Nakit" },
+                  { value: "kart", label: "Kart" },
+                ]}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Belge / Fatura No
+              </label>
+              <input
+                value={documentNumber}
+                onChange={(event) => setDocumentNumber(event.target.value)}
+                placeholder="Opsiyonel"
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
               />
             </div>
@@ -259,6 +365,9 @@ export default function AdminRandevularPage() {
                   Ücret
                 </th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-600">
+                  Ödeme
+                </th>
+                <th className="text-left px-6 py-4 font-semibold text-gray-600">
                   Tarih
                 </th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-600">
@@ -276,6 +385,13 @@ export default function AdminRandevularPage() {
                   <td className="px-6 py-4 text-gray-600">{a.phone}</td>
                   <td className="px-6 py-4 text-gray-900 font-medium">
                     {formatTRY(a.amount)}
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {a.paymentMethod === "nakit"
+                      ? "Nakit"
+                      : a.paymentMethod === "kart"
+                        ? "Kart"
+                        : "Belirtilmedi"}
                   </td>
                   <td className="px-6 py-4 text-gray-400">
                     {new Date(a.date).toLocaleDateString("tr-TR")}
@@ -303,6 +419,7 @@ export default function AdminRandevularPage() {
           </table>
         </div>
       )}
+
     </div>
   );
 }

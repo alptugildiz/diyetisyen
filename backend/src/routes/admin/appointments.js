@@ -13,6 +13,8 @@ const appointmentSchema = z.object({
   lastName: z.string().min(1),
   phone: z.string().regex(PHONE_RE, "Geçersiz telefon formatı"),
   amount: z.number().min(0),
+  paymentMethod: z.enum(["nakit", "kart"]).nullable().optional(),
+  documentNumber: z.string().optional(),
   date: z.string().min(1),
   note: z.string().optional(),
 });

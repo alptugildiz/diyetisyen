@@ -195,7 +195,7 @@ export default function AdminIstatistikPage() {
 
   const patientSplit = stats
     ? [
-        { name: "Yeni Hasta", value: stats.newPatients, color: EMERALD },
+        { name: "Yeni Danışan", value: stats.newPatients, color: EMERALD },
         { name: "Tekrar Eden", value: stats.returningPatients, color: INDIGO },
       ]
     : [];
@@ -237,7 +237,7 @@ export default function AdminIstatistikPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">İstatistikler</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Seçilen döneme ait kazanç ve hasta özeti
+          Seçilen döneme ait finans, randevu ve danışan özeti
         </p>
       </div>
 
@@ -245,18 +245,30 @@ export default function AdminIstatistikPage() {
 
       {loading ? (
         <p className="text-gray-400">Yükleniyor…</p>
-      ) : !stats || stats.totalAppointments === 0 ? (
+      ) : !stats ||
+        (stats.totalAppointments === 0 && stats.totalExpenses === 0) ? (
         <p className="text-gray-400">Bu dönemde veri yok.</p>
       ) : (
         <div className="space-y-6">
           {/* KPI tiles */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             <StatTile
-              label="Toplam Kazanç"
+              label="Toplam Gelir"
               value={formatTRY(stats.totalRevenue)}
               delta={stats.revenueChangePct}
               caption="önceki döneme göre"
               accent
+            />
+            <StatTile
+              label="Toplam Gider"
+              value={formatTRY(stats.totalExpenses)}
+              caption="seçili dönemde"
+            />
+            <StatTile
+              label="Net Kazanç"
+              value={formatTRY(stats.netRevenue)}
+              caption="gelir eksi gider"
+              accent={stats.netRevenue >= 0}
             />
             <StatTile
               label="Toplam Randevu"
@@ -265,15 +277,39 @@ export default function AdminIstatistikPage() {
               caption="önceki döneme göre"
             />
             <StatTile
-              label="Benzersiz Hasta"
+              label="Benzersiz Danışan"
               value={String(stats.uniquePatients)}
               caption="telefon numarasına göre"
             />
             <StatTile
-              label="Hasta Başına Ort."
+              label="Danışan Başına Ort."
               value={formatTRY(stats.avgPerPatient)}
               caption={`randevu başına ${formatTRY(stats.avgPerAppointment)}`}
             />
+          </div>
+
+          <div>
+            <h2 className="font-semibold text-gray-900 mb-3">Finans Özeti</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              {(["nakit", "kart", "belirtilmedi"] as const).map((method) => (
+                <StatTile
+                  key={method}
+                  label={
+                    method === "nakit"
+                      ? "Nakit"
+                      : method === "kart"
+                        ? "Kart"
+                        : "Ödeme Yöntemi Belirsiz"
+                  }
+                  value={formatTRY(
+                    stats.paymentBreakdown.find(
+                      (item) => item.method === method,
+                    )?.total ?? 0,
+                  )}
+                  caption="seçili dönemde"
+                />
+              ))}
+            </div>
           </div>
 
           {/* Monthly summary (Booking-based) */}
@@ -386,8 +422,8 @@ export default function AdminIstatistikPage() {
             </div>
 
             <ChartCard
-              title="Yeni / Tekrar Eden Hasta"
-              subtitle="Dönemdeki hasta bileşimi"
+              title="Yeni / Tekrar Eden Danışan"
+              subtitle="Dönemdeki danışan bileşimi"
             >
               <div className="relative">
                 <ResponsiveContainer width="100%" height={200}>
@@ -416,7 +452,7 @@ export default function AdminIstatistikPage() {
                   <span className="text-2xl font-bold text-gray-900 tabular-nums">
                     {stats.uniquePatients}
                   </span>
-                  <span className="text-xs text-gray-400">toplam hasta</span>
+                  <span className="text-xs text-gray-400">toplam danışan</span>
                 </div>
               </div>
               <div className="mt-4 space-y-2">
@@ -536,7 +572,7 @@ export default function AdminIstatistikPage() {
 
           {/* Top patients */}
           <ChartCard
-            title="En Çok Gelir Getiren Hastalar"
+            title="En Çok Gelir Getiren Danışanlar"
             subtitle="Dönem içinde toplam ödemeye göre ilk 6"
           >
             <div className="space-y-3">
@@ -590,7 +626,7 @@ export default function AdminIstatistikPage() {
               <StatTile
                 label="Ortalama Görüşme Sayısı"
                 value={String(stats.retention.avgFollowUpCount)}
-                caption="hasta başına, gerçekleşen randevular"
+                caption="danışan başına, gerçekleşen randevular"
               />
               <StatTile
                 label="Ortalama Takip Süresi"

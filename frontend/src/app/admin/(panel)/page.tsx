@@ -21,9 +21,10 @@ const plusDays = (iso: string, days: number) => {
 
 const NAV_CARDS = [
   { title: "Takvim", desc: "Randevuları takvimde görüntüle ve planla.", href: "/admin/takvim", emoji: "📆" },
-  { title: "Hastalar", desc: "Hasta profilleri ve notları yönet.", href: "/admin/hastalar", emoji: "👥" },
-  { title: "Tamamlanmış Randevular", desc: "Gelir kayıtlarını gir ve listele.", href: "/admin/randevular", emoji: "💰" },
-  { title: "İstatistikler", desc: "Kazanç ve hasta analizleri.", href: "/admin/istatistik", emoji: "📈" },
+  { title: "Danışanlar", desc: "Danışan profilleri ve notlarını yönet.", href: "/admin/hastalar", emoji: "👥" },
+  { title: "Randevu İşlemleri", desc: "Randevu gelirlerini ve ödemeleri yönet.", href: "/admin/randevular", emoji: "💰" },
+  { title: "Giderler", desc: "Vergi ve işletme giderlerini yönet.", href: "/admin/giderler", emoji: "🧾" },
+  { title: "İstatistikler", desc: "Finans, randevu ve danışan analizleri.", href: "/admin/istatistik", emoji: "📈" },
   { title: "Blog Yazıları", desc: "Yeni yazı ekle, düzenle veya sil.", href: "/admin/blog", emoji: "📝" },
   { title: "SSS", desc: "Sıkça sorulan soruları yönet.", href: "/admin/sss", emoji: "❓" },
 ];
@@ -139,7 +140,7 @@ export default function AdminDashboardPage() {
           value={loading ? "…" : String(monthCount)}
         />
         <StatTile
-          label="Toplam Hasta"
+          label="Toplam Danışan"
           value={loading ? "…" : String(patientCount)}
         />
       </div>

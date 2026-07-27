@@ -12,7 +12,7 @@ export const STATUS: Record<
     dot: "bg-brand-500",
   },
   geldi: {
-    label: "Geldi",
+    label: "Tamamlandı",
     badge: "bg-emerald-50 text-emerald-700",
     dot: "bg-emerald-500",
   },
@@ -22,7 +22,7 @@ export const STATUS: Record<
     dot: "bg-amber-500",
   },
   iptal: {
-    label: "İptal",
+    label: "İptal Edildi",
     badge: "bg-gray-100 text-gray-500",
     dot: "bg-gray-400",
   },

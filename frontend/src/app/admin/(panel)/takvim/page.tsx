@@ -6,6 +6,7 @@ import {
   adminGetBookings,
   adminGetPatients,
   adminDeleteBooking,
+  adminUpdateBooking,
 } from "@/lib/api";
 import {
   monthGrid,
@@ -17,8 +18,10 @@ import {
   WEEKDAY_LABELS,
 } from "@/lib/calendar";
 import { STATUS } from "@/lib/bookingStatus";
+import { CANCEL_REASON, CANCEL_REASON_OPTIONS } from "@/lib/bookingCancelReason";
+import { SelectInput } from "@/components/admin/DateTimeInput";
 import BookingForm from "@/components/admin/BookingForm";
-import type { Booking, Patient } from "@/types";
+import type { Booking, BookingCancelReason, BookingStatus, Patient } from "@/types";
 
 export default function AdminTakvimPage() {
   const { data: session } = useSession();
@@ -34,6 +37,13 @@ export default function AdminTakvimPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Booking | null>(null);
+  const [quickBooking, setQuickBooking] = useState<Booking | null>(null);
+  const [quickStatus, setQuickStatus] = useState<BookingStatus>("geldi");
+  const [quickAmount, setQuickAmount] = useState(0);
+  const [quickPayment, setQuickPayment] = useState<"nakit" | "kart">("nakit");
+  const [quickDocument, setQuickDocument] = useState("");
+  const [quickReason, setQuickReason] = useState<BookingCancelReason>("belirtilmedi");
+  const [quickSaving, setQuickSaving] = useState(false);
 
   const fetchBookings = async () => {
     if (!token) return;
@@ -104,6 +114,45 @@ export default function AdminTakvimPage() {
       return;
     await adminDeleteBooking(b._id, token);
     setBookings((prev) => prev.filter((x) => x._id !== b._id));
+  };
+
+  const openQuickStatus = (booking: Booking, status: BookingStatus) => {
+    setQuickBooking(booking);
+    setQuickStatus(status);
+    setQuickAmount(0);
+    setQuickPayment("nakit");
+    setQuickDocument("");
+    setQuickReason("belirtilmedi");
+  };
+
+  const saveQuickStatus = async () => {
+    if (!quickBooking) return;
+    setQuickSaving(true);
+    try {
+      await adminUpdateBooking(
+        quickBooking._id,
+        {
+          status: quickStatus,
+          cancelReason:
+            quickStatus === "gelmedi" || quickStatus === "iptal"
+              ? quickReason
+              : null,
+          completionPayment:
+            quickStatus === "geldi"
+              ? {
+                  amount: quickAmount,
+                  paymentMethod: quickPayment,
+                  documentNumber: quickDocument,
+                }
+              : undefined,
+        },
+        token,
+      );
+      setQuickBooking(null);
+      fetchBookings();
+    } finally {
+      setQuickSaving(false);
+    }
   };
 
   const dayBookings = selectedDay ? (byDay[selectedDay] ?? []) : [];
@@ -250,6 +299,28 @@ export default function AdminTakvimPage() {
                     {STATUS[b.status].label}
                   </span>
                   <div className="flex gap-3">
+                    {b.status === "planlandi" && (
+                      <>
+                        <button
+                          onClick={() => openQuickStatus(b, "geldi")}
+                          className="text-emerald-600 hover:underline text-sm font-medium"
+                        >
+                          Tamamla
+                        </button>
+                        <button
+                          onClick={() => openQuickStatus(b, "gelmedi")}
+                          className="text-amber-600 hover:underline text-sm font-medium"
+                        >
+                          Gelmedi
+                        </button>
+                        <button
+                          onClick={() => openQuickStatus(b, "iptal")}
+                          className="text-gray-500 hover:underline text-sm font-medium"
+                        >
+                          İptal
+                        </button>
+                      </>
+                    )}
                     <button
                       onClick={() => openEdit(b)}
                       className="text-brand-600 hover:underline text-sm font-medium"
@@ -293,6 +364,46 @@ export default function AdminTakvimPage() {
                 setEditing(null);
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {quickBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl space-y-4">
+            <div>
+              <h2 className="font-semibold text-gray-900">
+                {STATUS[quickStatus].label}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {quickBooking.patient.firstName} {quickBooking.patient.lastName}
+              </p>
+            </div>
+            {quickStatus === "geldi" ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Alınan Ücret (₺)</label>
+                  <input type="number" min={0} value={quickAmount || ""} onChange={(e) => setQuickAmount(Number(e.target.value))} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ödeme Yöntemi</label>
+                  <SelectInput value={quickPayment} onChange={(v) => setQuickPayment(v as "nakit" | "kart")} options={[{ value: "nakit", label: "Nakit" }, { value: "kart", label: "Kart" }]} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Belge / Fatura No (opsiyonel)</label>
+                  <input value={quickDocument} onChange={(e) => setQuickDocument(e.target.value)} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm" />
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Neden</label>
+                <SelectInput value={quickReason} onChange={(v) => setQuickReason(v as BookingCancelReason)} options={CANCEL_REASON_OPTIONS.map((reason) => ({ value: reason, label: CANCEL_REASON[reason].label }))} />
+              </div>
+            )}
+            <div className="flex gap-3 justify-end">
+              <button onClick={saveQuickStatus} disabled={quickSaving} className="bg-brand-500 text-white font-semibold px-5 py-2 rounded-xl text-sm disabled:opacity-50">{quickSaving ? "Kaydediliyor…" : "Kaydet"}</button>
+              <button onClick={() => setQuickBooking(null)} className="border border-gray-300 text-gray-600 font-semibold px-5 py-2 rounded-xl text-sm">Vazgeç</button>
+            </div>
           </div>
         </div>
       )}

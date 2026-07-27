@@ -30,8 +30,9 @@ export default async function AdminLayout({
               {[
                 { href: "/admin", label: "📊 Dashboard" },
                 { href: "/admin/takvim", label: "📆 Takvim" },
-                { href: "/admin/hastalar", label: "👥 Hastalar" },
-                { href: "/admin/randevular", label: "💰 Tamamlanmış Randevular" },
+                { href: "/admin/hastalar", label: "👥 Danışanlar" },
+                { href: "/admin/randevular", label: "💰 Randevu İşlemleri" },
+                { href: "/admin/giderler", label: "🧾 Giderler" },
                 { href: "/admin/istatistik", label: "📈 İstatistikler" },
                 { href: "/admin/blog", label: "📝 Blog Yazıları" },
                 { href: "/admin/sss", label: "❓ SSS" },

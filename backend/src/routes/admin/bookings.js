@@ -1,6 +1,8 @@
 const express = require("express");
 const { z } = require("zod");
 const Booking = require("../../models/Booking");
+const Appointment = require("../../models/Appointment");
+const Patient = require("../../models/Patient");
 const { protect } = require("../../middleware/auth");
 
 const router = express.Router();
@@ -23,6 +25,13 @@ const bookingSchema = z.object({
   status: z.enum(["planlandi", "geldi", "gelmedi", "iptal"]).optional(),
   cancelReason: z.enum(CANCEL_REASONS).optional().nullable(),
   note: z.string().optional(),
+  completionPayment: z
+    .object({
+      amount: z.number().min(0),
+      paymentMethod: z.enum(["nakit", "kart"]),
+      documentNumber: z.string().optional(),
+    })
+    .optional(),
 });
 
 function needsCancelReason(status) {
@@ -101,6 +110,8 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const data = bookingSchema.partial().parse(req.body);
+    const completionPayment = data.completionPayment;
+    delete data.completionPayment;
     if (data.date) data.date = new Date(data.date);
 
     const existing = await Booking.findById(req.params.id);
@@ -129,6 +140,26 @@ router.put("/:id", async (req, res) => {
       new: true,
       runValidators: true,
     }).populate("patient", "firstName lastName phone");
+
+    if (resultingStatus === "geldi" && completionPayment) {
+      const patient = await Patient.findById(booking.patient._id);
+      await Appointment.findOneAndUpdate(
+        { booking: booking._id },
+        {
+          booking: booking._id,
+          patient: booking.patient._id,
+          firstName: patient.firstName,
+          lastName: patient.lastName,
+          phone: patient.phone,
+          amount: completionPayment.amount,
+          paymentMethod: completionPayment.paymentMethod,
+          documentNumber: completionPayment.documentNumber ?? "",
+          date: booking.date,
+          note: booking.note,
+        },
+        { upsert: true, new: true, runValidators: true },
+      );
+    }
     res.json(booking);
   } catch (err) {
     if (err.name === "ZodError")

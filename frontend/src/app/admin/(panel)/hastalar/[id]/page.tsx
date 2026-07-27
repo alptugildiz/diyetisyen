@@ -93,9 +93,9 @@ export default function PatientDetailPage({
   if (notFound || !patient)
     return (
       <div>
-        <p className="text-gray-400 mb-4">Hasta bulunamadı.</p>
+        <p className="text-gray-400 mb-4">Danışan bulunamadı.</p>
         <Link href="/admin/hastalar" className="text-brand-600 hover:underline">
-          ← Hastalar
+          ← Danışanlar
         </Link>
       </div>
     );
@@ -106,7 +106,7 @@ export default function PatientDetailPage({
         href="/admin/hastalar"
         className="text-sm text-gray-500 hover:text-brand-600"
       >
-        ← Hastalar
+        ← Danışanlar
       </Link>
 
       {/* Profile */}
@@ -148,7 +148,7 @@ export default function PatientDetailPage({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={3}
-            placeholder="Bu hastayla ilgili kalıcı notlar (alerji, hedef, tercihler…)"
+            placeholder="Bu danışanla ilgili kalıcı notlar (alerji, hedef, tercihler…)"
             className={inputCls + " resize-none"}
           />
           <div className="flex items-center gap-3 mt-2">
@@ -173,7 +173,7 @@ export default function PatientDetailPage({
           <span className="text-gray-400 font-normal">({bookings.length})</span>
         </h2>
         {bookings.length === 0 ? (
-          <p className="text-gray-400 text-sm">Bu hastaya ait randevu yok.</p>
+          <p className="text-gray-400 text-sm">Bu danışana ait randevu yok.</p>
         ) : (
           <div className="divide-y divide-gray-100">
             {bookings.map((b) => (

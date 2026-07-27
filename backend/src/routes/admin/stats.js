@@ -2,6 +2,7 @@ const express = require("express");
 const Appointment = require("../../models/Appointment");
 const Booking = require("../../models/Booking");
 const Patient = require("../../models/Patient");
+const Expense = require("../../models/Expense");
 const { protect } = require("../../middleware/auth");
 
 const router = express.Router();
@@ -209,6 +210,8 @@ router.get("/", async (req, res) => {
       retention,
       sourceMix,
       cancelReasons,
+      expenseSummary,
+      paymentSummary,
     ] = await Promise.all([
       summarize(match),
       Appointment.aggregate([
@@ -254,9 +257,24 @@ router.get("/", async (req, res) => {
       retentionStats(match),
       sourceBreakdown(match),
       cancelReasonBreakdown(match),
+      Expense.aggregate([
+        { $match: match },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ]),
+      Appointment.aggregate([
+        { $match: match },
+        {
+          $group: {
+            _id: { $ifNull: ["$paymentMethod", "belirtilmedi"] },
+            total: { $sum: "$amount" },
+          },
+        },
+      ]),
     ]);
 
     const totalRevenue = current.revenue;
+    const totalExpenses = expenseSummary[0]?.total ?? 0;
+    const netRevenue = totalRevenue - totalExpenses;
     const totalAppointments = current.count;
 
     const returningPatients = perPhone.filter((p) => p.count > 1).length;
@@ -356,6 +374,12 @@ router.get("/", async (req, res) => {
 
     res.json({
       totalRevenue,
+      totalExpenses,
+      netRevenue,
+      paymentBreakdown: paymentSummary.map((item) => ({
+        method: item._id,
+        total: item.total,
+      })),
       totalAppointments,
       uniquePatients,
       avgPerAppointment,

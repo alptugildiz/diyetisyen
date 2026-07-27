@@ -81,7 +81,7 @@ export default function BookingForm({
       // Quick-create a new patient inline
       if (!fixedPatient && newMode) {
         if (!nFirst || !nLast || !nPhone) {
-          setError("Yeni hasta için ad, soyad ve telefon gerekli.");
+          setError("Yeni danışan için ad, soyad ve telefon gerekli.");
           setSaving(false);
           return;
         }
@@ -99,7 +99,7 @@ export default function BookingForm({
       }
 
       if (!pid) {
-        setError("Lütfen bir hasta seçin.");
+        setError("Lütfen bir danışan seçin.");
         setSaving(false);
         return;
       }
@@ -128,7 +128,7 @@ export default function BookingForm({
       {/* Patient selection */}
       {fixedPatient ? (
         <div>
-          <span className={labelCls}>Hasta</span>
+          <span className={labelCls}>Danışan</span>
           <p className="text-sm font-medium text-gray-900">
             {fixedPatient.firstName} {fixedPatient.lastName}
           </p>
@@ -137,14 +137,14 @@ export default function BookingForm({
         <div className="space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">
-              Yeni Hasta
+              Yeni Danışan
             </span>
             <button
               type="button"
               onClick={() => setNewMode(false)}
               className="text-xs text-brand-600 hover:underline"
             >
-              Mevcut hastadan seç
+              Mevcut danışandan seç
             </button>
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -170,20 +170,20 @@ export default function BookingForm({
       ) : (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <span className={labelCls + " mb-0"}>Hasta</span>
+            <span className={labelCls + " mb-0"}>Danışan</span>
             <button
               type="button"
               onClick={() => setNewMode(true)}
               className="text-xs text-brand-600 hover:underline"
             >
-              + Yeni hasta
+              + Yeni danışan
             </button>
           </div>
           <SelectInput
             value={patientId}
             onChange={setPatientId}
             searchable
-            placeholder="Hasta seçin"
+            placeholder="Danışan seçin"
             inputClassName={inputCls}
             options={(patients ?? []).map((p) => ({
               value: p._id,
@@ -204,7 +204,7 @@ export default function BookingForm({
         </div>
       </div>
 
-      <div>
+      {initial && <div>
         <label className={labelCls}>Durum</label>
         <SelectInput
           value={status}
@@ -215,7 +215,7 @@ export default function BookingForm({
             label: STATUS[s].label,
           }))}
         />
-      </div>
+      </div>}
 
       {needsCancelReason && (
         <div>

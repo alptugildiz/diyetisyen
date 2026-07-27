@@ -14,6 +14,7 @@ const adminAppointmentRoutes = require("./routes/admin/appointments");
 const adminStatsRoutes = require("./routes/admin/stats");
 const adminPatientRoutes = require("./routes/admin/patients");
 const adminBookingRoutes = require("./routes/admin/bookings");
+const adminExpenseRoutes = require("./routes/admin/expenses");
 const appointmentRoutes = require("./routes/appointment");
 
 const app = express();
@@ -64,6 +65,7 @@ app.use("/api/admin/appointments", adminAppointmentRoutes);
 app.use("/api/admin/stats", adminStatsRoutes);
 app.use("/api/admin/patients", adminPatientRoutes);
 app.use("/api/admin/bookings", adminBookingRoutes);
+app.use("/api/admin/expenses", adminExpenseRoutes);
 
 // 404
 app.use((_req, res) => res.status(404).json({ message: "Route not found" }));
