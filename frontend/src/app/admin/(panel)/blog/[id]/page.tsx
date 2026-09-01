@@ -8,6 +8,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import { adminGetPost, adminCreatePost, adminUpdatePost, adminUploadImage } from "@/lib/api";
+import { Button, INPUT_CLS } from "@/components/admin/ui";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -133,13 +134,9 @@ export default function BlogEditorPage({ params }: Props) {
             <option value="draft">Taslak</option>
             <option value="published">Yayınla</option>
           </select>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-md text-sm transition-colors cursor-pointer"
-          >
-            {saving ? "Kaydediliyor…" : "Kaydet"}
-          </button>
+          <Button onClick={handleSave} loading={saving}>
+            Kaydet
+          </Button>
         </div>
       </div>
 
@@ -154,7 +151,7 @@ export default function BlogEditorPage({ params }: Props) {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className={INPUT_CLS}
             placeholder="Yazı başlığı"
           />
         </div>
@@ -167,7 +164,7 @@ export default function BlogEditorPage({ params }: Props) {
             onChange={(e) => setExcerpt(e.target.value)}
             rows={3}
             maxLength={300}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
+            className={`${INPUT_CLS} resize-none`}
             placeholder="Kısa özet (maks. 300 karakter)"
           />
         </div>
@@ -238,7 +235,7 @@ export default function BlogEditorPage({ params }: Props) {
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+              className={INPUT_CLS}
               placeholder="sağlık, diyet, tarif"
             />
           </div>
