@@ -2,6 +2,8 @@ const express = require("express");
 const { z } = require("zod");
 const Patient = require("../../models/Patient");
 const Booking = require("../../models/Booking");
+const PatientPackage = require("../../models/PatientPackage");
+const Payment = require("../../models/Payment");
 const { protect } = require("../../middleware/auth");
 
 const router = express.Router();
@@ -42,8 +44,23 @@ router.get("/", async (req, res) => {
           ],
         }
       : {};
-    const patients = await Patient.find(filter).sort({ createdAt: -1 });
-    res.json(patients);
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+
+    const [patients, total] = await Promise.all([
+      Patient.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+      Patient.countDocuments(filter),
+    ]);
+
+    res.json({
+      patients,
+      total,
+      page,
+      totalPages: Math.max(Math.ceil(total / limit), 1),
+    });
   } catch {
     res.status(500).json({ message: "Server error" });
   }
@@ -99,12 +116,15 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// DELETE /api/admin/patients/:id  (ilişkili randevuları da siler)
+// DELETE /api/admin/patients/:id  (ilişkili tüm kayıtları da siler)
 router.delete("/:id", async (req, res) => {
   try {
     const patient = await Patient.findByIdAndDelete(req.params.id);
     if (!patient) return res.status(404).json({ message: "Patient not found" });
+    // Öksüz kayıt bırakma: randevular, paketler ve tahsilatlar da gider.
     await Booking.deleteMany({ patient: patient._id });
+    await PatientPackage.deleteMany({ patient: patient._id });
+    await Payment.deleteMany({ patient: patient._id });
     res.json({ message: "Patient deleted" });
   } catch {
     res.status(500).json({ message: "Server error" });
