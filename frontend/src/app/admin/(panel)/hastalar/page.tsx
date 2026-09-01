@@ -12,19 +12,30 @@ import { isValidPhone } from "@/lib/phone";
 import PhoneInput from "@/components/admin/PhoneInput";
 import { SelectInput } from "@/components/admin/DateTimeInput";
 import { PATIENT_SOURCE, PATIENT_SOURCE_OPTIONS } from "@/lib/patientSource";
+import {
+  Button,
+  DataTable,
+  EmptyState,
+  Field,
+  INPUT_CLS,
+  Modal,
+  useConfirm,
+  type Column,
+} from "@/components/admin/ui";
 import type { Patient, PatientSource } from "@/types";
-
-const inputCls =
-  "w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400";
-const labelCls = "block text-sm font-medium text-gray-700 mb-1";
 
 export default function AdminHastalarPage() {
   const { data: session } = useSession();
   const token = (session as { backendToken?: string })?.backendToken ?? "";
+  const confirm = useConfirm();
 
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const [showForm, setShowForm] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -35,19 +46,30 @@ export default function AdminHastalarPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchPatients = async () => {
-    if (!token) return;
-    try {
-      setPatients((await adminGetPatients(token)).patients);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Arama sunucuda yapılıyor; 300ms debounce ile her tuşta istek atmıyoruz.
   useEffect(() => {
-    fetchPatients();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+    if (!token) return;
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await adminGetPatients(token, {
+          q: search.trim() || undefined,
+          page,
+        });
+        setPatients(res.patients);
+        setTotalPages(res.totalPages);
+        setTotal(res.total);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [token, search, page, reloadKey]);
+
+  // Arama değişince ilk sayfaya dön
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   const resetForm = () => {
     setFirstName("");
@@ -71,12 +93,12 @@ export default function AdminHastalarPage() {
     setSaving(true);
     setError("");
     try {
-      const created = await adminCreatePatient(
+      await adminCreatePatient(
         { firstName, lastName, phone, source: source || null, note },
         token,
       );
-      setPatients((prev) => [created, ...prev]);
       resetForm();
+      setReloadKey((k) => k + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kayıt başarısız.");
     } finally {
@@ -85,169 +107,196 @@ export default function AdminHastalarPage() {
   };
 
   const handleDelete = async (p: Patient) => {
-    if (
-      !confirm(
-        `${p.firstName} ${p.lastName} ve tüm randevuları silinsin mi?`,
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: "Danışan silinsin mi?",
+      message: `${p.firstName} ${p.lastName} ile birlikte tüm randevuları, paketleri ve tahsilatları silinecek.`,
+      confirmLabel: "Sil",
+      danger: true,
+    });
+    if (!ok) return;
     await adminDeletePatient(p._id, token);
-    setPatients((prev) => prev.filter((x) => x._id !== p._id));
+    setReloadKey((k) => k + 1);
   };
 
-  const q = search.trim().toLowerCase();
-  const filtered = q
-    ? patients.filter((p) =>
-        `${p.firstName} ${p.lastName} ${p.phone}`.toLowerCase().includes(q),
-      )
-    : patients;
+  const columns: Column<Patient>[] = [
+    {
+      key: "name",
+      header: "Ad Soyad",
+      render: (p) => (
+        <Link
+          href={`/admin/hastalar/${p._id}`}
+          className="text-gray-900 font-medium hover:text-brand-600"
+        >
+          {p.firstName} {p.lastName}
+        </Link>
+      ),
+    },
+    { key: "phone", header: "Telefon", render: (p) => p.phone },
+    {
+      key: "note",
+      header: "Not",
+      hideOnMobile: true,
+      render: (p) => (
+        <span className="text-gray-400 line-clamp-1">{p.note}</span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (p) => (
+        <div className="flex gap-3 justify-end">
+          <Link
+            href={`/admin/hastalar/${p._id}`}
+            className="text-brand-600 hover:underline font-medium"
+          >
+            Detay
+          </Link>
+          <button
+            onClick={() => handleDelete(p)}
+            className="text-red-400 hover:underline font-medium"
+          >
+            Sil
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-3">
         <h1 className="text-2xl font-bold text-gray-900">Danışanlar</h1>
-        <button
+        <Button
           onClick={() => {
             resetForm();
             setShowForm(true);
           }}
-          className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
         >
           + Yeni Danışan
-        </button>
+        </Button>
       </div>
 
       <input
         placeholder="Ad, soyad veya telefon ara…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className={inputCls + " mb-6 max-w-md"}
+        className={`${INPUT_CLS} mb-6 max-w-md`}
       />
 
-      {showForm && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 space-y-4">
-          <h2 className="font-semibold text-gray-900">Yeni Danışan</h2>
-          <div className="grid sm:grid-cols-4 gap-4">
-            <div>
-              <label className={labelCls}>Ad</label>
+      {loading ? (
+        <p className="text-gray-400">Yükleniyor…</p>
+      ) : (
+        <>
+          <DataTable
+            columns={columns}
+            rows={patients}
+            keyOf={(p) => p._id}
+            empty={
+              <EmptyState
+                title={
+                  search.trim() ? "Eşleşen danışan yok" : "Henüz danışan yok"
+                }
+                description={
+                  search.trim()
+                    ? "Farklı bir ad veya telefon dene."
+                    : "İlk danışanı ekleyerek başla."
+                }
+              />
+            }
+          />
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-gray-400">{total} danışan</p>
+              <div className="flex gap-2 items-center">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={page === 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  Önceki
+                </Button>
+                <span className="text-sm text-gray-500 tabular-nums">
+                  {page} / {totalPages}
+                </span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={page === totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Sonraki
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      <Modal
+        open={showForm}
+        onClose={resetForm}
+        title="Yeni Danışan"
+        footer={
+          <>
+            <Button onClick={handleSave} loading={saving}>
+              Kaydet
+            </Button>
+            <Button variant="secondary" onClick={resetForm}>
+              İptal
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Ad">
               <input
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className={inputCls}
+                className={INPUT_CLS}
               />
-            </div>
-            <div>
-              <label className={labelCls}>Soyad</label>
+            </Field>
+            <Field label="Soyad">
               <input
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className={inputCls}
+                className={INPUT_CLS}
               />
-            </div>
-            <div>
-              <label className={labelCls}>Telefon</label>
-              <PhoneInput value={phone} onChange={setPhone} inputClassName={inputCls} />
-            </div>
-            <div>
-              <label className={labelCls}>Kaynak (opsiyonel)</label>
+            </Field>
+            <Field label="Telefon">
+              <PhoneInput
+                value={phone}
+                onChange={setPhone}
+                inputClassName={INPUT_CLS}
+              />
+            </Field>
+            <Field label="Kaynak" hint="Opsiyonel">
               <SelectInput
                 value={source}
                 onChange={(v) => setSource(v as PatientSource)}
-                inputClassName={inputCls}
+                inputClassName={INPUT_CLS}
                 placeholder="Nereden geldi?"
                 options={PATIENT_SOURCE_OPTIONS.map((s) => ({
                   value: s,
                   label: PATIENT_SOURCE[s].label,
                 }))}
               />
-            </div>
+            </Field>
           </div>
-          <div>
-            <label className={labelCls}>Genel Not (opsiyonel)</label>
+          <Field label="Genel Not" hint="Opsiyonel">
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
-              className={inputCls + " resize-none"}
+              className={`${INPUT_CLS} resize-none`}
             />
-          </div>
+          </Field>
           {error && <p className="text-sm text-red-500">{error}</p>}
-          <div className="flex gap-3 justify-end">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-xl text-sm transition-colors"
-            >
-              {saving ? "Kaydediliyor…" : "Kaydet"}
-            </button>
-            <button
-              onClick={resetForm}
-              className="border border-gray-300 text-gray-600 font-semibold px-5 py-2 rounded-xl text-sm hover:bg-gray-50 transition-colors"
-            >
-              İptal
-            </button>
-          </div>
         </div>
-      )}
-
-      {loading ? (
-        <p className="text-gray-400">Yükleniyor…</p>
-      ) : filtered.length === 0 ? (
-        <p className="text-gray-400">
-          {q ? "Eşleşen danışan yok." : "Henüz danışan yok."}
-        </p>
-      ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">
-                  Ad Soyad
-                </th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">
-                  Telefon
-                </th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">
-                  Not
-                </th>
-                <th className="px-6 py-4" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map((p) => (
-                <tr key={p._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <Link
-                      href={`/admin/hastalar/${p._id}`}
-                      className="text-gray-900 font-medium hover:text-brand-600"
-                    >
-                      {p.firstName} {p.lastName}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">{p.phone}</td>
-                  <td className="px-6 py-4 text-gray-400 max-w-xs truncate">
-                    {p.note}
-                  </td>
-                  <td className="px-6 py-4 flex gap-3 justify-end">
-                    <Link
-                      href={`/admin/hastalar/${p._id}`}
-                      className="text-brand-600 hover:underline font-medium"
-                    >
-                      Detay
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(p)}
-                      className="text-red-400 hover:underline font-medium"
-                    >
-                      Sil
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }
