@@ -1,6 +1,7 @@
 const express = require("express");
 const { z } = require("zod");
 const rateLimit = require("express-rate-limit");
+const AppointmentRequest = require("../models/AppointmentRequest");
 
 const router = express.Router();
 
@@ -23,12 +24,20 @@ router.post("/", appointmentLimiter, async (req, res) => {
   try {
     const data = appointmentSchema.parse(req.body);
 
+    // Önce kaydet: Telegram düşerse bile talep kaybolmasın. Panel bu
+    // kaydı "Talepler" ekranında gösterir.
+    await AppointmentRequest.create({
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+    });
+
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
     if (!token || !chatId) {
       console.error("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is not set");
-      return res.status(500).json({ message: "Sunucu yapılandırma hatası." });
+      return res.json({ success: true });
     }
 
     const message =
@@ -38,23 +47,29 @@ router.post("/", appointmentLimiter, async (req, res) => {
       `📞 *Telefon:* ${data.phone}\n\n` +
       `📅 *Tarih:* ${new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" })}`;
 
-    const telegramRes = await fetch(
-      `https://api.telegram.org/bot${token}/sendMessage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message,
-          parse_mode: "Markdown",
-        }),
-      },
-    );
-
-    if (!telegramRes.ok) {
-      const err = await telegramRes.json().catch(() => ({}));
-      console.error("Telegram API error:", err);
-      return res.status(500).json({ message: "Mesaj gönderilemedi." });
+    // Bildirim en iyi çabadır; başarısızlığı kullanıcıya hata olarak
+    // dönmüyoruz, çünkü talep zaten kaydedildi.
+    try {
+      const telegramRes = await fetch(
+        `https://api.telegram.org/bot${token}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: "Markdown",
+          }),
+        },
+      );
+      if (!telegramRes.ok) {
+        console.error(
+          "Telegram API error:",
+          await telegramRes.json().catch(() => ({})),
+        );
+      }
+    } catch (telegramErr) {
+      console.error("Telegram request failed:", telegramErr.message);
     }
 
     res.json({ success: true });
