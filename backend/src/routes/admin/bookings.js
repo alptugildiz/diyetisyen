@@ -4,6 +4,7 @@ const Booking = require("../../models/Booking");
 const Appointment = require("../../models/Appointment");
 const Patient = require("../../models/Patient");
 const { protect } = require("../../middleware/auth");
+const { buildDateFilter, toUtcMidnight } = require("../../lib/dateRange");
 
 const router = express.Router();
 router.use(protect);
@@ -36,17 +37,6 @@ const bookingSchema = z.object({
 
 function needsCancelReason(status) {
   return status === "iptal" || status === "gelmedi";
-}
-
-// Build a { date: { $gte, $lte } } filter from ?from&to query params
-function buildDateFilter(query) {
-  const filter = {};
-  if (query.from || query.to) {
-    filter.date = {};
-    if (query.from) filter.date.$gte = new Date(query.from);
-    if (query.to) filter.date.$lte = new Date(query.to);
-  }
-  return filter;
 }
 
 // GET /api/admin/bookings?from=&to=
@@ -87,7 +77,7 @@ router.post("/", async (req, res) => {
 
     const created = await Booking.create({
       ...data,
-      date: new Date(data.date),
+      date: toUtcMidnight(data.date),
       cancelReason: needsCancelReason(status) ? data.cancelReason : null,
       visitType,
     });
@@ -112,7 +102,7 @@ router.put("/:id", async (req, res) => {
     const data = bookingSchema.partial().parse(req.body);
     const completionPayment = data.completionPayment;
     delete data.completionPayment;
-    if (data.date) data.date = new Date(data.date);
+    if (data.date) data.date = toUtcMidnight(data.date);
 
     const existing = await Booking.findById(req.params.id);
     if (!existing)

@@ -2,6 +2,7 @@ const express = require("express");
 const { z } = require("zod");
 const Expense = require("../../models/Expense");
 const { protect } = require("../../middleware/auth");
+const { buildDateFilter, toUtcMidnight } = require("../../lib/dateRange");
 
 const router = express.Router();
 router.use(protect);
@@ -12,16 +13,6 @@ const expenseSchema = z.object({
   date: z.string().min(1),
   note: z.string().optional(),
 });
-
-function buildDateFilter(query) {
-  const filter = {};
-  if (query.from || query.to) {
-    filter.date = {};
-    if (query.from) filter.date.$gte = new Date(query.from);
-    if (query.to) filter.date.$lte = new Date(query.to);
-  }
-  return filter;
-}
 
 router.get("/", async (req, res) => {
   try {
@@ -40,7 +31,7 @@ router.post("/", async (req, res) => {
     const data = expenseSchema.parse(req.body);
     const expense = await Expense.create({
       ...data,
-      date: new Date(data.date),
+      date: toUtcMidnight(data.date),
     });
     res.status(201).json(expense);
   } catch (err) {
@@ -55,7 +46,7 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const data = expenseSchema.partial().parse(req.body);
-    if (data.date) data.date = new Date(data.date);
+    if (data.date) data.date = toUtcMidnight(data.date);
     const expense = await Expense.findByIdAndUpdate(req.params.id, data, {
       new: true,
       runValidators: true,
