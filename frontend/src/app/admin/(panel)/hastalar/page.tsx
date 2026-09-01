@@ -38,7 +38,7 @@ export default function AdminHastalarPage() {
   const fetchPatients = async () => {
     if (!token) return;
     try {
-      setPatients(await adminGetPatients(token));
+      setPatients((await adminGetPatients(token)).patients);
     } finally {
       setLoading(false);
     }

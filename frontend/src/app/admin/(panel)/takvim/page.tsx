@@ -6,7 +6,7 @@ import {
   adminGetBookings,
   adminGetPatients,
   adminDeleteBooking,
-  adminUpdateBooking,
+  adminCompleteBooking,
 } from "@/lib/api";
 import {
   monthGrid,
@@ -21,7 +21,7 @@ import { STATUS } from "@/lib/bookingStatus";
 import { CANCEL_REASON, CANCEL_REASON_OPTIONS } from "@/lib/bookingCancelReason";
 import { SelectInput } from "@/components/admin/DateTimeInput";
 import BookingForm from "@/components/admin/BookingForm";
-import type { Booking, BookingCancelReason, BookingStatus, Patient } from "@/types";
+import type { Booking, BookingCancelReason, Patient } from "@/types";
 
 export default function AdminTakvimPage() {
   const { data: session } = useSession();
@@ -38,7 +38,8 @@ export default function AdminTakvimPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Booking | null>(null);
   const [quickBooking, setQuickBooking] = useState<Booking | null>(null);
-  const [quickStatus, setQuickStatus] = useState<BookingStatus>("geldi");
+  type Outcome = "geldi" | "gelmedi" | "iptal";
+  const [quickStatus, setQuickStatus] = useState<Outcome>("geldi");
   const [quickAmount, setQuickAmount] = useState(0);
   const [quickPayment, setQuickPayment] = useState<"nakit" | "kart">("nakit");
   const [quickDocument, setQuickDocument] = useState("");
@@ -62,7 +63,8 @@ export default function AdminTakvimPage() {
   }, [token, year, month]);
 
   useEffect(() => {
-    if (token) adminGetPatients(token).then(setPatients);
+    if (token)
+      adminGetPatients(token, { limit: 200 }).then((r) => setPatients(r.patients));
   }, [token]);
 
   const grid = useMemo(() => monthGrid(year, month), [year, month]);
@@ -116,7 +118,7 @@ export default function AdminTakvimPage() {
     setBookings((prev) => prev.filter((x) => x._id !== b._id));
   };
 
-  const openQuickStatus = (booking: Booking, status: BookingStatus) => {
+  const openQuickStatus = (booking: Booking, status: Outcome) => {
     setQuickBooking(booking);
     setQuickStatus(status);
     setQuickAmount(0);
@@ -129,7 +131,7 @@ export default function AdminTakvimPage() {
     if (!quickBooking) return;
     setQuickSaving(true);
     try {
-      await adminUpdateBooking(
+      await adminCompleteBooking(
         quickBooking._id,
         {
           status: quickStatus,
@@ -137,11 +139,12 @@ export default function AdminTakvimPage() {
             quickStatus === "gelmedi" || quickStatus === "iptal"
               ? quickReason
               : null,
-          completionPayment:
+          fee: quickStatus === "geldi" ? quickAmount : undefined,
+          payment:
             quickStatus === "geldi"
               ? {
                   amount: quickAmount,
-                  paymentMethod: quickPayment,
+                  method: quickPayment,
                   documentNumber: quickDocument,
                 }
               : undefined,

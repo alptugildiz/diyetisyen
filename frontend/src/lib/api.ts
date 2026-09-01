@@ -2,14 +2,22 @@ import type {
   Post,
   PostListResponse,
   Faq,
-  Appointment,
-  AppointmentListResponse,
   Expense,
   ExpenseListResponse,
   StatsResponse,
   Patient,
   PatientDetail,
+  PatientListResponse,
   Booking,
+  Package,
+  PatientPackage,
+  Payment,
+  PaymentListResponse,
+  PaymentMethod,
+  PaymentSource,
+  AppointmentRequest,
+  RequestStatus,
+  TodayResponse,
 } from "@/types";
 
 // Server-side (SSR/SSG): Docker internal hostname
@@ -178,49 +186,6 @@ export function adminDeleteFaq(id: string, token: string) {
 
 // ─── Randevular & İstatistik ───────────────────────────────────
 
-export function adminGetAppointments(
-  token: string,
-  params?: { from?: string; to?: string },
-) {
-  const q = new URLSearchParams();
-  if (params?.from) q.set("from", params.from);
-  if (params?.to) q.set("to", params.to);
-  const qs = q.toString();
-  return adminFetch<AppointmentListResponse>(
-    `/api/admin/appointments${qs ? `?${qs}` : ""}`,
-    token,
-  );
-}
-
-export function adminCreateAppointment(
-  data: Partial<Appointment>,
-  token: string,
-) {
-  return adminFetch<Appointment>("/api/admin/appointments", token, {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
-
-export function adminUpdateAppointment(
-  id: string,
-  data: Partial<Appointment>,
-  token: string,
-) {
-  return adminFetch<Appointment>(`/api/admin/appointments/${id}`, token, {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
-}
-
-export function adminDeleteAppointment(id: string, token: string) {
-  return adminFetch<{ message: string }>(
-    `/api/admin/appointments/${id}`,
-    token,
-    { method: "DELETE" },
-  );
-}
-
 export function adminGetExpenses(
   token: string,
   params?: { from?: string; to?: string },
@@ -275,9 +240,19 @@ export function adminGetStats(
 
 // ─── Hastalar (Patient) ────────────────────────────────────────
 
-export function adminGetPatients(token: string, q?: string) {
-  const qs = q ? `?q=${encodeURIComponent(q)}` : "";
-  return adminFetch<Patient[]>(`/api/admin/patients${qs}`, token);
+export function adminGetPatients(
+  token: string,
+  params?: { q?: string; page?: number; limit?: number },
+) {
+  const q = new URLSearchParams();
+  if (params?.q) q.set("q", params.q);
+  if (params?.page) q.set("page", String(params.page));
+  if (params?.limit) q.set("limit", String(params.limit));
+  const qs = q.toString();
+  return adminFetch<PatientListResponse>(
+    `/api/admin/patients${qs ? `?${qs}` : ""}`,
+    token,
+  );
 }
 
 export function adminGetPatient(id: string, token: string) {
@@ -333,11 +308,6 @@ export function adminCreateBooking(
     status?: string;
     cancelReason?: string | null;
     note?: string;
-    completionPayment?: {
-      amount: number;
-      paymentMethod: "nakit" | "kart";
-      documentNumber?: string;
-    };
   },
   token: string,
 ) {
@@ -356,11 +326,6 @@ export function adminUpdateBooking(
     status?: string;
     cancelReason?: string | null;
     note?: string;
-    completionPayment?: {
-      amount: number;
-      paymentMethod: "nakit" | "kart";
-      documentNumber?: string;
-    };
   },
   token: string,
 ) {
@@ -374,4 +339,211 @@ export function adminDeleteBooking(id: string, token: string) {
   return adminFetch<{ message: string }>(`/api/admin/bookings/${id}`, token, {
     method: "DELETE",
   });
+}
+
+// ─── Randevu sonuçlandırma ─────────────────────────────────────
+
+export function adminCompleteBooking(
+  id: string,
+  data: {
+    status: "geldi" | "gelmedi" | "iptal";
+    fee?: number;
+    patientPackage?: string | null;
+    cancelReason?: string | null;
+    payment?: {
+      amount: number;
+      method: PaymentMethod;
+      documentNumber?: string;
+    };
+  },
+  token: string,
+) {
+  return adminFetch<Booking>(`/api/admin/bookings/${id}/complete`, token, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+// ─── Paket katalogu ────────────────────────────────────────────
+
+export function adminGetPackages(token: string, activeOnly = false) {
+  return adminFetch<Package[]>(
+    `/api/admin/packages${activeOnly ? "?activeOnly=true" : ""}`,
+    token,
+  );
+}
+
+export function adminCreatePackage(data: Partial<Package>, token: string) {
+  return adminFetch<Package>("/api/admin/packages", token, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminUpdatePackage(
+  id: string,
+  data: Partial<Package>,
+  token: string,
+) {
+  return adminFetch<Package>(`/api/admin/packages/${id}`, token, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminDeletePackage(id: string, token: string) {
+  return adminFetch<{ message: string }>(`/api/admin/packages/${id}`, token, {
+    method: "DELETE",
+  });
+}
+
+// ─── Satılan paketler ──────────────────────────────────────────
+
+export function adminGetPatientPackages(
+  token: string,
+  params?: { patient?: string; from?: string; to?: string },
+) {
+  const q = new URLSearchParams();
+  if (params?.patient) q.set("patient", params.patient);
+  if (params?.from) q.set("from", params.from);
+  if (params?.to) q.set("to", params.to);
+  const qs = q.toString();
+  return adminFetch<PatientPackage[]>(
+    `/api/admin/patient-packages${qs ? `?${qs}` : ""}`,
+    token,
+  );
+}
+
+export function adminCreatePatientPackage(
+  data: {
+    patient: string;
+    package?: string | null;
+    name: string;
+    sessionCount: number;
+    price: number;
+    soldAt: string;
+    note?: string;
+  },
+  token: string,
+) {
+  return adminFetch<PatientPackage>("/api/admin/patient-packages", token, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminDeletePatientPackage(id: string, token: string) {
+  return adminFetch<{ message: string }>(
+    `/api/admin/patient-packages/${id}`,
+    token,
+    { method: "DELETE" },
+  );
+}
+
+// ─── Tahsilatlar ───────────────────────────────────────────────
+
+export function adminGetPayments(
+  token: string,
+  params?: { from?: string; to?: string; patient?: string },
+) {
+  const q = new URLSearchParams();
+  if (params?.from) q.set("from", params.from);
+  if (params?.to) q.set("to", params.to);
+  if (params?.patient) q.set("patient", params.patient);
+  const qs = q.toString();
+  return adminFetch<PaymentListResponse>(
+    `/api/admin/payments${qs ? `?${qs}` : ""}`,
+    token,
+  );
+}
+
+export interface PaymentInput {
+  patient: string;
+  source: PaymentSource;
+  booking?: string | null;
+  patientPackage?: string | null;
+  amount: number;
+  method: PaymentMethod;
+  date: string;
+  documentNumber?: string;
+  note?: string;
+}
+
+export function adminCreatePayment(data: PaymentInput, token: string) {
+  return adminFetch<Payment>("/api/admin/payments", token, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminUpdatePayment(
+  id: string,
+  data: PaymentInput,
+  token: string,
+) {
+  return adminFetch<Payment>(`/api/admin/payments/${id}`, token, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminDeletePayment(id: string, token: string) {
+  return adminFetch<{ message: string }>(`/api/admin/payments/${id}`, token, {
+    method: "DELETE",
+  });
+}
+
+// ─── Randevu talepleri ─────────────────────────────────────────
+
+export function adminGetRequests(token: string, status?: RequestStatus) {
+  return adminFetch<AppointmentRequest[]>(
+    `/api/admin/requests${status ? `?status=${status}` : ""}`,
+    token,
+  );
+}
+
+export function adminConvertRequest(
+  id: string,
+  data: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    source?: string | null;
+    note?: string;
+    booking?: { date: string; time?: string };
+  },
+  token: string,
+) {
+  return adminFetch<{
+    request: AppointmentRequest;
+    patient: Patient;
+    booking: Booking | null;
+  }>(`/api/admin/requests/${id}/convert`, token, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function adminUpdateRequest(
+  id: string,
+  status: RequestStatus,
+  token: string,
+) {
+  return adminFetch<AppointmentRequest>(`/api/admin/requests/${id}`, token, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
+  });
+}
+
+// ─── Bugün / rozetler ──────────────────────────────────────────
+
+export function adminGetToday(token: string, date?: string) {
+  return adminFetch<TodayResponse>(
+    `/api/admin/today${date ? `?date=${date}` : ""}`,
+    token,
+  );
+}
+
+export function adminGetBadges(token: string) {
+  return adminFetch<{ pendingRequests: number }>("/api/admin/badges", token);
 }

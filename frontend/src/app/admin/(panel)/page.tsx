@@ -101,7 +101,7 @@ export default function AdminDashboardPage() {
         ]);
         setMonthRevenue(stats.totalRevenue);
         setMonthCount(stats.totalAppointments);
-        setPatientCount(patients.length);
+        setPatientCount(patients.total);
         setTodayBookings(todayB);
         setUpcoming(upcomingB.slice(0, 6));
       } finally {

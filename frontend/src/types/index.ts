@@ -27,26 +27,6 @@ export interface Faq {
   isActive: boolean;
 }
 
-export interface Appointment {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  amount: number;
-  paymentMethod: "nakit" | "kart" | null;
-  documentNumber: string;
-  date: string;
-  note: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AppointmentListResponse {
-  appointments: Appointment[];
-  total: number;
-  count: number;
-}
-
 export type ExpenseCategory = "vergi" | "muhasebe" | "bagkur" | "diger";
 
 export interface Expense {
@@ -109,6 +89,9 @@ export interface Booking {
   status: BookingStatus;
   visitType: BookingVisitType | null;
   cancelReason: BookingCancelReason | null;
+  // Tahakkuk: bu seansın ücreti. Tahsilat ayrı bir Payment kaydıdır.
+  fee: number;
+  patientPackage: string | null;
   note: string;
   createdAt: string;
   updatedAt: string;
@@ -123,8 +106,12 @@ export interface StatsResponse {
   totalRevenue: number;
   totalExpenses: number;
   netRevenue: number;
+  sessionRevenue: number;
+  packageRevenue: number;
+  outstandingReceivables: number;
+  topDebtors: { name: string; phone: string; debt: number }[];
   paymentBreakdown: {
-    method: "nakit" | "kart" | "belirtilmedi";
+    method: PaymentMethod;
     total: number;
   }[];
   totalAppointments: number;
@@ -173,4 +160,87 @@ export interface StatsResponse {
     reason: BookingCancelReason;
     count: number;
   }[];
+}
+
+// ─── Para: paket, tahsilat ─────────────────────────────────────
+
+export type PaymentMethod = "nakit" | "kart" | "havale";
+export type PaymentSource = "booking" | "package";
+export type RequestStatus = "yeni" | "donusturuldu" | "yoksayildi";
+export type PatientPackageStatus = "aktif" | "tamamlandi" | "iptal";
+
+export interface Package {
+  _id: string;
+  name: string;
+  sessionCount: number;
+  price: number;
+  isActive: boolean;
+  order: number;
+}
+
+export interface PatientPackage {
+  _id: string;
+  patient: Pick<Patient, "_id" | "firstName" | "lastName" | "phone">;
+  package: string | null;
+  name: string;
+  sessionCount: number;
+  price: number;
+  soldAt: string;
+  status: PatientPackageStatus;
+  note: string;
+  // Sunucuda türetilir, saklanmaz
+  usedSessions: number;
+  remainingSessions: number;
+  paidAmount: number;
+  remainingDebt: number;
+}
+
+export interface Payment {
+  _id: string;
+  patient: Pick<Patient, "_id" | "firstName" | "lastName" | "phone">;
+  source: PaymentSource;
+  booking: Pick<Booking, "_id" | "date" | "time"> | null;
+  patientPackage: Pick<PatientPackage, "_id" | "name"> | null;
+  amount: number;
+  method: PaymentMethod;
+  date: string;
+  documentNumber: string;
+  note: string;
+}
+
+export interface PaymentListResponse {
+  payments: Payment[];
+  total: number;
+  count: number;
+}
+
+export interface PatientListResponse {
+  patients: Patient[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface AppointmentRequest {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: RequestStatus;
+  patient: Pick<Patient, "_id" | "firstName" | "lastName"> | null;
+  createdAt: string;
+}
+
+export interface TodayResponse {
+  date: string;
+  bookings: Booking[];
+  unprocessedCount: number;
+  collectedToday: number;
+  outstandingReceivables: number;
+  endingPackages: {
+    patient: Pick<Patient, "_id" | "firstName" | "lastName">;
+    name: string;
+    remainingSessions: number;
+  }[];
+  pendingRequests: number;
 }
