@@ -6,7 +6,6 @@ import {
   adminGetBookings,
   adminGetPatients,
   adminDeleteBooking,
-  adminCompleteBooking,
 } from "@/lib/api";
 import {
   monthGrid,
@@ -18,14 +17,15 @@ import {
   WEEKDAY_LABELS,
 } from "@/lib/calendar";
 import { STATUS } from "@/lib/bookingStatus";
-import { CANCEL_REASON, CANCEL_REASON_OPTIONS } from "@/lib/bookingCancelReason";
-import { SelectInput } from "@/components/admin/DateTimeInput";
 import BookingForm from "@/components/admin/BookingForm";
-import type { Booking, BookingCancelReason, Patient } from "@/types";
+import BookingActionSheet from "@/components/admin/BookingActionSheet";
+import { Button, Modal, useConfirm } from "@/components/admin/ui";
+import type { Booking, Patient } from "@/types";
 
 export default function AdminTakvimPage() {
   const { data: session } = useSession();
   const token = (session as { backendToken?: string })?.backendToken ?? "";
+  const confirm = useConfirm();
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -37,14 +37,7 @@ export default function AdminTakvimPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Booking | null>(null);
-  const [quickBooking, setQuickBooking] = useState<Booking | null>(null);
-  type Outcome = "geldi" | "gelmedi" | "iptal";
-  const [quickStatus, setQuickStatus] = useState<Outcome>("geldi");
-  const [quickAmount, setQuickAmount] = useState(0);
-  const [quickPayment, setQuickPayment] = useState<"nakit" | "kart">("nakit");
-  const [quickDocument, setQuickDocument] = useState("");
-  const [quickReason, setQuickReason] = useState<BookingCancelReason>("belirtilmedi");
-  const [quickSaving, setQuickSaving] = useState(false);
+  const [acting, setActing] = useState<Booking | null>(null);
 
   const fetchBookings = async () => {
     if (!token) return;
@@ -108,68 +101,24 @@ export default function AdminTakvimPage() {
     setShowForm(true);
   };
   const handleDelete = async (b: Booking) => {
-    if (
-      !confirm(
-        `${b.patient.firstName} ${b.patient.lastName} randevusu silinsin mi?`,
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: "Randevu silinsin mi?",
+      message: `${b.patient.firstName} ${b.patient.lastName} randevusu ve varsa bağlı tahsilatı silinecek.`,
+      confirmLabel: "Sil",
+      danger: true,
+    });
+    if (!ok) return;
     await adminDeleteBooking(b._id, token);
     setBookings((prev) => prev.filter((x) => x._id !== b._id));
-  };
-
-  const openQuickStatus = (booking: Booking, status: Outcome) => {
-    setQuickBooking(booking);
-    setQuickStatus(status);
-    setQuickAmount(0);
-    setQuickPayment("nakit");
-    setQuickDocument("");
-    setQuickReason("belirtilmedi");
-  };
-
-  const saveQuickStatus = async () => {
-    if (!quickBooking) return;
-    setQuickSaving(true);
-    try {
-      await adminCompleteBooking(
-        quickBooking._id,
-        {
-          status: quickStatus,
-          cancelReason:
-            quickStatus === "gelmedi" || quickStatus === "iptal"
-              ? quickReason
-              : null,
-          fee: quickStatus === "geldi" ? quickAmount : undefined,
-          payment:
-            quickStatus === "geldi"
-              ? {
-                  amount: quickAmount,
-                  method: quickPayment,
-                  documentNumber: quickDocument,
-                }
-              : undefined,
-        },
-        token,
-      );
-      setQuickBooking(null);
-      fetchBookings();
-    } finally {
-      setQuickSaving(false);
-    }
   };
 
   const dayBookings = selectedDay ? (byDay[selectedDay] ?? []) : [];
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-3">
         <h1 className="text-2xl font-bold text-gray-900">Takvim</h1>
-        <button
-          onClick={() => openNew()}
-          className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
-        >
-          + Yeni Randevu
-        </button>
+        <Button onClick={() => openNew()}>+ Yeni Randevu</Button>
       </div>
 
       {/* Month nav */}
@@ -181,7 +130,7 @@ export default function AdminTakvimPage() {
         >
           ‹
         </button>
-        <span className="text-lg font-semibold text-gray-900 min-w-44 text-center">
+        <span className="text-lg font-semibold text-gray-900 min-w-40 text-center">
           {formatMonthTitle(year, month)}
         </span>
         <button
@@ -191,16 +140,13 @@ export default function AdminTakvimPage() {
         >
           ›
         </button>
-        <button
-          onClick={goToday}
-          className="ml-2 border border-gray-300 text-gray-600 font-medium px-4 py-1.5 rounded-lg text-sm hover:bg-gray-50"
-        >
+        <Button variant="secondary" size="sm" onClick={goToday}>
           Bugün
-        </button>
+        </Button>
       </div>
 
-      {/* Calendar grid */}
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+      {/* Ay grid'i — masaüstü */}
+      <div className="hidden md:block bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
           {WEEKDAY_LABELS.map((d) => (
             <div
@@ -257,21 +203,48 @@ export default function AdminTakvimPage() {
         </div>
       </div>
 
+      {/* Mobilde ay grid'i okunamayacak kadar dar — yatay gün seçici */}
+      <div className="md:hidden -mx-4 px-4">
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {grid
+            .filter((c) => c.inMonth)
+            .map((cell) => {
+              const count = (byDay[cell.iso] ?? []).length;
+              const selected = selectedDay === cell.iso;
+              return (
+                <button
+                  key={cell.iso}
+                  onClick={() => setSelectedDay(cell.iso)}
+                  className={`shrink-0 w-14 py-2 rounded-xl text-center border transition-colors ${
+                    selected
+                      ? "bg-brand-500 border-brand-500 text-white"
+                      : cell.isToday
+                        ? "border-brand-300 text-brand-600"
+                        : "border-gray-200 text-gray-600 bg-white"
+                  }`}
+                >
+                  <span className="block text-sm font-semibold">{cell.day}</span>
+                  <span className="block text-[10px] opacity-70">
+                    {count > 0 ? `${count} rnd` : "—"}
+                  </span>
+                </button>
+              );
+            })}
+        </div>
+      </div>
+
       {loading && <p className="text-gray-400 mt-3 text-sm">Yükleniyor…</p>}
 
-      {/* Selected day panel */}
+      {/* Seçili gün paneli */}
       {selectedDay && (
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mt-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <h2 className="font-semibold text-gray-900">
               {formatFullDate(selectedDay)}
             </h2>
-            <button
-              onClick={() => openNew(selectedDay)}
-              className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors"
-            >
+            <Button size="sm" onClick={() => openNew(selectedDay)}>
               + Randevu Ekle
-            </button>
+            </Button>
           </div>
           {dayBookings.length === 0 ? (
             <p className="text-gray-400 text-sm">Bu güne randevu yok.</p>
@@ -280,9 +253,9 @@ export default function AdminTakvimPage() {
               {dayBookings.map((b) => (
                 <div
                   key={b._id}
-                  className="flex items-center gap-4 py-3 first:pt-0 last:pb-0"
+                  className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 flex-wrap"
                 >
-                  <span className="text-sm font-semibold text-gray-900 tabular-nums w-14">
+                  <span className="text-sm font-semibold text-gray-900 tabular-nums w-14 shrink-0">
                     {b.time || "—"}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -301,28 +274,11 @@ export default function AdminTakvimPage() {
                   >
                     {STATUS[b.status].label}
                   </span>
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 items-center">
                     {b.status === "planlandi" && (
-                      <>
-                        <button
-                          onClick={() => openQuickStatus(b, "geldi")}
-                          className="text-emerald-600 hover:underline text-sm font-medium"
-                        >
-                          Tamamla
-                        </button>
-                        <button
-                          onClick={() => openQuickStatus(b, "gelmedi")}
-                          className="text-amber-600 hover:underline text-sm font-medium"
-                        >
-                          Gelmedi
-                        </button>
-                        <button
-                          onClick={() => openQuickStatus(b, "iptal")}
-                          className="text-gray-500 hover:underline text-sm font-medium"
-                        >
-                          İptal
-                        </button>
-                      </>
+                      <Button size="sm" onClick={() => setActing(b)}>
+                        İşle
+                      </Button>
                     )}
                     <button
                       onClick={() => openEdit(b)}
@@ -344,72 +300,41 @@ export default function AdminTakvimPage() {
         </div>
       )}
 
-      {/* Form modal */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
-            <h2 className="font-semibold text-gray-900 mb-4">
-              {editing ? "Randevu Düzenle" : "Yeni Randevu"}
-            </h2>
-            <BookingForm
-              token={token}
-              patients={patients}
-              onPatientCreated={(p) => setPatients((prev) => [p, ...prev])}
-              initial={editing}
-              defaultDate={editing ? undefined : (selectedDay ?? todayISO())}
-              onSaved={() => {
-                setShowForm(false);
-                setEditing(null);
-                fetchBookings();
-              }}
-              onCancel={() => {
-                setShowForm(false);
-                setEditing(null);
-              }}
-            />
-          </div>
-        </div>
-      )}
+      <Modal
+        open={showForm}
+        onClose={() => {
+          setShowForm(false);
+          setEditing(null);
+        }}
+        title={editing ? "Randevu Düzenle" : "Yeni Randevu"}
+      >
+        <BookingForm
+          token={token}
+          patients={patients}
+          onPatientCreated={(p) => setPatients((prev) => [p, ...prev])}
+          initial={editing}
+          defaultDate={editing ? undefined : (selectedDay ?? todayISO())}
+          onSaved={() => {
+            setShowForm(false);
+            setEditing(null);
+            fetchBookings();
+          }}
+          onCancel={() => {
+            setShowForm(false);
+            setEditing(null);
+          }}
+        />
+      </Modal>
 
-      {quickBooking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl space-y-4">
-            <div>
-              <h2 className="font-semibold text-gray-900">
-                {STATUS[quickStatus].label}
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                {quickBooking.patient.firstName} {quickBooking.patient.lastName}
-              </p>
-            </div>
-            {quickStatus === "geldi" ? (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Alınan Ücret (₺)</label>
-                  <input type="number" min={0} value={quickAmount || ""} onChange={(e) => setQuickAmount(Number(e.target.value))} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ödeme Yöntemi</label>
-                  <SelectInput value={quickPayment} onChange={(v) => setQuickPayment(v as "nakit" | "kart")} options={[{ value: "nakit", label: "Nakit" }, { value: "kart", label: "Kart" }]} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Belge / Fatura No (opsiyonel)</label>
-                  <input value={quickDocument} onChange={(e) => setQuickDocument(e.target.value)} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm" />
-                </div>
-              </>
-            ) : (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Neden</label>
-                <SelectInput value={quickReason} onChange={(v) => setQuickReason(v as BookingCancelReason)} options={CANCEL_REASON_OPTIONS.map((reason) => ({ value: reason, label: CANCEL_REASON[reason].label }))} />
-              </div>
-            )}
-            <div className="flex gap-3 justify-end">
-              <button onClick={saveQuickStatus} disabled={quickSaving} className="bg-brand-500 text-white font-semibold px-5 py-2 rounded-xl text-sm disabled:opacity-50">{quickSaving ? "Kaydediliyor…" : "Kaydet"}</button>
-              <button onClick={() => setQuickBooking(null)} className="border border-gray-300 text-gray-600 font-semibold px-5 py-2 rounded-xl text-sm">Vazgeç</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <BookingActionSheet
+        booking={acting}
+        token={token}
+        onClose={() => setActing(null)}
+        onSaved={() => {
+          setActing(null);
+          fetchBookings();
+        }}
+      />
     </div>
   );
 }
