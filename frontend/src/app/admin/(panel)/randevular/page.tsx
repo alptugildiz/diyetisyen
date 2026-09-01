@@ -10,13 +10,13 @@ import {
   adminGetPatients,
 } from "@/lib/api";
 import { formatTRY } from "@/lib/periods";
+import { todayISO } from "@/lib/date";
 import PeriodFilter, { type Range } from "@/components/admin/PeriodFilter";
 import { DateInput, SelectInput } from "@/components/admin/DateTimeInput";
 import PhoneInput from "@/components/admin/PhoneInput";
 import { isValidPhone } from "@/lib/phone";
 import type { Appointment, Patient } from "@/types";
 
-const today = () => new Date().toISOString().slice(0, 10);
 
 export default function AdminRandevularPage() {
   const { data: session } = useSession();
@@ -39,7 +39,7 @@ export default function AdminRandevularPage() {
   const [amount, setAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<"nakit" | "kart">("nakit");
   const [documentNumber, setDocumentNumber] = useState("");
-  const [date, setDate] = useState(today());
+  const [date, setDate] = useState(todayISO());
   const [note, setNote] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -77,7 +77,7 @@ export default function AdminRandevularPage() {
     setAmount(0);
     setPaymentMethod("nakit");
     setDocumentNumber("");
-    setDate(today());
+    setDate(todayISO());
     setNote("");
     setShowForm(false);
     setError("");

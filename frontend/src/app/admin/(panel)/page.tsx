@@ -9,15 +9,9 @@ import {
   adminGetPatients,
 } from "@/lib/api";
 import { periodRange, formatTRY } from "@/lib/periods";
-import { todayISO } from "@/lib/calendar";
+import { todayISO, addDays } from "@/lib/date";
 import { STATUS } from "@/lib/bookingStatus";
 import type { Booking } from "@/types";
-
-const plusDays = (iso: string, days: number) => {
-  const d = new Date(`${iso}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-};
 
 const NAV_CARDS = [
   { title: "Takvim", desc: "Randevuları takvimde görüntüle ve planla.", href: "/admin/takvim", emoji: "📆" },
@@ -101,8 +95,8 @@ export default function AdminDashboardPage() {
           adminGetPatients(token),
           adminGetBookings(token, { from: today, to: today }),
           adminGetBookings(token, {
-            from: plusDays(today, 1),
-            to: plusDays(today, 60),
+            from: addDays(today, 1),
+            to: addDays(today, 60),
           }),
         ]);
         setMonthRevenue(stats.totalRevenue);

@@ -9,11 +9,11 @@ import {
   adminUpdateExpense,
 } from "@/lib/api";
 import { formatTRY } from "@/lib/periods";
+import { todayISO } from "@/lib/date";
 import PeriodFilter, { type Range } from "@/components/admin/PeriodFilter";
 import { DateInput, SelectInput } from "@/components/admin/DateTimeInput";
 import type { Expense, ExpenseCategory } from "@/types";
 
-const today = () => new Date().toISOString().slice(0, 10);
 
 const EXPENSE_CATEGORY: Record<ExpenseCategory, string> = {
   vergi: "Vergi",
@@ -35,7 +35,7 @@ export default function AdminGiderlerPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [category, setCategory] = useState<ExpenseCategory>("vergi");
   const [amount, setAmount] = useState(0);
-  const [date, setDate] = useState(today());
+  const [date, setDate] = useState(todayISO());
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -61,7 +61,7 @@ export default function AdminGiderlerPage() {
     setEditId(null);
     setCategory("vergi");
     setAmount(0);
-    setDate(today());
+    setDate(todayISO());
     setNote("");
     setShowForm(false);
     setError("");

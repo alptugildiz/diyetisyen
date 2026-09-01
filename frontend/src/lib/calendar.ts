@@ -2,6 +2,10 @@
 // All day keys are ISO "YYYY-MM-DD" in UTC to stay timezone-safe, matching how
 // booking dates are stored (new Date("YYYY-MM-DD") = UTC midnight).
 
+import { toISODate, todayISO } from "@/lib/date";
+
+export { todayISO };
+
 export const WEEKDAY_LABELS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 
 const MONTHS = [
@@ -26,15 +30,6 @@ export interface DayCell {
   isToday: boolean;
 }
 
-const pad = (n: number) => String(n).padStart(2, "0");
-const isoOf = (y: number, m: number, d: number) =>
-  `${y}-${pad(m + 1)}-${pad(d)}`;
-
-export function todayISO(): string {
-  const n = new Date();
-  return isoOf(n.getFullYear(), n.getMonth(), n.getDate());
-}
-
 // Monday-first 6×7 grid covering the given month (with leading/trailing days).
 export function monthGrid(year: number, month: number): DayCell[] {
   const first = new Date(year, month, 1);
@@ -46,7 +41,7 @@ export function monthGrid(year: number, month: number): DayCell[] {
   const cells: DayCell[] = [];
   for (let i = 0; i < 42; i++) {
     const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
-    const iso = isoOf(d.getFullYear(), d.getMonth(), d.getDate());
+    const iso = toISODate(d);
     cells.push({
       iso,
       day: d.getDate(),

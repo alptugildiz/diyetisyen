@@ -1,5 +1,7 @@
 // Shared date-range presets for the admin appointment & stats pages.
 
+import { toISODate } from "@/lib/date";
+
 export type PeriodKey =
   | "thisMonth"
   | "last3"
@@ -14,8 +16,6 @@ export const PERIODS: { key: PeriodKey; label: string }[] = [
   { key: "thisYear", label: "Bu Yıl" },
   { key: "custom", label: "Özel" },
 ];
-
-const toISODate = (d: Date) => d.toISOString().slice(0, 10);
 
 // Returns { from, to } as YYYY-MM-DD strings for a preset period.
 // Custom ranges are handled by the page (two date inputs), not here.
