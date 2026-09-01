@@ -19,6 +19,8 @@ const adminPackageRoutes = require("./routes/admin/packages");
 const adminPatientPackageRoutes = require("./routes/admin/patientPackages");
 const adminPaymentRoutes = require("./routes/admin/payments");
 const adminRequestRoutes = require("./routes/admin/requests");
+const adminTodayRoutes = require("./routes/admin/today");
+const adminBadgeRoutes = require("./routes/admin/badges");
 const appointmentRoutes = require("./routes/appointment");
 
 const app = express();
@@ -73,6 +75,8 @@ app.use("/api/admin/packages", adminPackageRoutes);
 app.use("/api/admin/patient-packages", adminPatientPackageRoutes);
 app.use("/api/admin/payments", adminPaymentRoutes);
 app.use("/api/admin/requests", adminRequestRoutes);
+app.use("/api/admin/today", adminTodayRoutes);
+app.use("/api/admin/badges", adminBadgeRoutes);
 
 // 404
 app.use((_req, res) => res.status(404).json({ message: "Route not found" }));
