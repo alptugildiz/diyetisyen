@@ -3,6 +3,7 @@ const app = require("../src/app");
 const Patient = require("../src/models/Patient");
 const Booking = require("../src/models/Booking");
 const Appointment = require("../src/models/Appointment");
+const Payment = require("../src/models/Payment");
 const { connect, clearDatabase, closeDatabase } = require("./testDb");
 const { makeToken } = require("./authHelper");
 
@@ -87,7 +88,7 @@ describe("admin finance records", () => {
     expect(res.body.netRevenue).toBe(1000);
   });
 
-  it("creates an income record when a booking is completed", async () => {
+  it("creates a payment record when a booking is completed", async () => {
     const patient = await Patient.create({
       firstName: "Ayşe",
       lastName: "Yılmaz",
@@ -101,21 +102,22 @@ describe("admin finance records", () => {
     });
 
     const res = await request(app)
-      .put(`/api/admin/bookings/${booking._id}`)
+      .post(`/api/admin/bookings/${booking._id}/complete`)
       .set("Authorization", `Bearer ${token}`)
       .send({
         status: "geldi",
-        completionPayment: {
+        fee: 1750,
+        payment: {
           amount: 1750,
-          paymentMethod: "kart",
+          method: "kart",
           documentNumber: "F-2026-15",
         },
       });
 
     expect(res.status).toBe(200);
-    const income = await Appointment.findOne({ booking: booking._id });
+    const income = await Payment.findOne({ booking: booking._id });
     expect(income.amount).toBe(1750);
-    expect(income.paymentMethod).toBe("kart");
+    expect(income.method).toBe("kart");
     expect(income.documentNumber).toBe("F-2026-15");
   });
 });

@@ -36,6 +36,16 @@ const bookingSchema = new mongoose.Schema(
       ],
       default: null,
     },
+    // Bu seansın ücreti (tahakkuk). Yalnızca status "geldi" ise anlamlı.
+    // Paketten düşen seanslarda 0 kalır — para paket satışında tahsil edildi.
+    fee: { type: Number, default: 0, min: 0 },
+    // Doluysa bu seans o paketten düşer.
+    patientPackage: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PatientPackage",
+      default: null,
+      index: true,
+    },
     note: { type: String, default: "", trim: true }, // randevuya özel not
   },
   { timestamps: true },
