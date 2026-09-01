@@ -32,18 +32,22 @@ export default function AdminFinansPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token || !range) return;
-    setLoading(true);
-    Promise.all([
-      adminGetPayments(token, range),
-      adminGetExpenses(token, range),
-    ])
-      .then(([pay, exp]) => {
+    const load = async () => {
+      if (!token || !range) return;
+      setLoading(true);
+      try {
+        const [pay, exp] = await Promise.all([
+          adminGetPayments(token, range),
+          adminGetExpenses(token, range),
+        ]);
         setPayments(pay.payments);
         setIncomeTotal(pay.total);
         setExpenseTotal(exp.total);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, [token, range]);
 
   // Tahsilatın nereden geldiğini tek satırda anlatır.
