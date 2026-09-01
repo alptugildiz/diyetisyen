@@ -5,6 +5,7 @@ const Appointment = require("../../models/Appointment");
 const Patient = require("../../models/Patient");
 const { protect } = require("../../middleware/auth");
 const { buildDateFilter, toUtcMidnight } = require("../../lib/dateRange");
+const { recalcVisitTypes } = require("../../lib/visitType");
 
 const router = express.Router();
 router.use(protect);
@@ -70,18 +71,16 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Ziyaret tipi her zaman sunucuda hesaplanır: hastanın bu klinikteki
-    // ilk kaydıysa "ilk_gorusme", aksi halde "kontrol".
-    const priorCount = await Booking.countDocuments({ patient: data.patient });
-    const visitType = priorCount === 0 ? "ilk_gorusme" : "kontrol";
-
     const created = await Booking.create({
       ...data,
       date: toUtcMidnight(data.date),
       cancelReason: needsCancelReason(status) ? data.cancelReason : null,
-      visitType,
     });
-    const booking = await created.populate(
+
+    // Ziyaret tipi tarihe göre belirlenir; geçmiş bir randevu sonradan
+    // girilebildiği için danışanın tüm randevuları yeniden değerlendirilir.
+    await recalcVisitTypes(created.patient);
+    const booking = await Booking.findById(created._id).populate(
       "patient",
       "firstName lastName phone",
     );
@@ -126,10 +125,17 @@ router.put("/:id", async (req, res) => {
     // Durum artık iptal/gelmedi değilse eski nedeni temizle.
     if (!needsCancelReason(resultingStatus)) data.cancelReason = null;
 
-    const booking = await Booking.findByIdAndUpdate(req.params.id, data, {
+    let booking = await Booking.findByIdAndUpdate(req.params.id, data, {
       new: true,
       runValidators: true,
-    }).populate("patient", "firstName lastName phone");
+    });
+
+    // Tarih veya durum değişmiş olabilir; ziyaret tipleri yeniden hesaplanır.
+    await recalcVisitTypes(booking.patient);
+    booking = await Booking.findById(booking._id).populate(
+      "patient",
+      "firstName lastName phone",
+    );
 
     if (resultingStatus === "geldi" && completionPayment) {
       const patient = await Patient.findById(booking.patient._id);
@@ -166,6 +172,7 @@ router.delete("/:id", async (req, res) => {
     const booking = await Booking.findByIdAndDelete(req.params.id);
     if (!booking)
       return res.status(404).json({ message: "Booking not found" });
+    await recalcVisitTypes(booking.patient);
     res.json({ message: "Booking deleted" });
   } catch {
     res.status(500).json({ message: "Server error" });
