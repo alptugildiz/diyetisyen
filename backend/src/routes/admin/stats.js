@@ -1,14 +1,17 @@
 const express = require("express");
-const Appointment = require("../../models/Appointment");
+const Payment = require("../../models/Payment");
+const PatientPackage = require("../../models/PatientPackage");
 const Booking = require("../../models/Booking");
 const Patient = require("../../models/Patient");
 const Expense = require("../../models/Expense");
 const { protect } = require("../../middleware/auth");
+const { buildDateFilter } = require("../../lib/dateRange");
 
 const router = express.Router();
 router.use(protect);
 
 const WEEKDAYS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+const PAYMENT_METHODS = ["nakit", "kart", "havale"];
 const SOURCES = [
   "instagram",
   "google",
@@ -30,33 +33,24 @@ const CANCEL_REASONS = [
 ];
 const PROCESS_STATUSES = ["aktif", "tamamladi", "birakti"];
 
-// Build a { date: { $gte, $lte } } match from ?from&to query params
-function buildMatch(query) {
-  const match = {};
-  if (query.from || query.to) {
-    match.date = {};
-    if (query.from) match.date.$gte = new Date(query.from);
-    if (query.to) match.date.$lte = new Date(query.to);
-  }
-  return match;
-}
-
 function pct(cur, old) {
   return old > 0 ? Math.round(((cur - old) / old) * 100) : null;
 }
 
-async function summarize(match) {
-  const res = await Appointment.aggregate([
+// Gelir kasa esaslıdır: dönemin geliri, o dönemde tarihi olan
+// tahsilatların toplamıdır. Paket bedeli satış anında yazılır.
+async function summarizePayments(match) {
+  const res = await Payment.aggregate([
     { $match: match },
-    {
-      $group: {
-        _id: null,
-        revenue: { $sum: "$amount" },
-        count: { $sum: 1 },
-      },
-    },
+    { $group: { _id: "$source", total: { $sum: "$amount" } } },
   ]);
-  return { revenue: res[0]?.revenue ?? 0, count: res[0]?.count ?? 0 };
+  const sessionRevenue = res.find((r) => r._id === "booking")?.total ?? 0;
+  const packageRevenue = res.find((r) => r._id === "package")?.total ?? 0;
+  return {
+    revenue: sessionRevenue + packageRevenue,
+    sessionRevenue,
+    packageRevenue,
+  };
 }
 
 async function summarizeBookings(match) {
@@ -87,6 +81,58 @@ async function summarizeBookings(match) {
     newPatients: r.newPatients ?? 0,
     followUps: r.followUps ?? 0,
   };
+}
+
+// Alacak = tahakkuk − tahsilat. İki kaynaktan gelir:
+// (1) "geldi" işaretli ama tahsilatı eksik randevular,
+// (2) bedeli tam ödenmemiş paket satışları.
+// Aynı tanım /api/admin/today içinde de kullanılır — iki ekran farklı
+// rakam göstermemeli.
+async function computeReceivables(query) {
+  const byPatient = new Map();
+  let total = 0;
+
+  const add = (patientId, debt) => {
+    if (debt <= 0) return;
+    total += debt;
+    const key = String(patientId);
+    byPatient.set(key, (byPatient.get(key) ?? 0) + debt);
+  };
+
+  const completed = await Booking.find({
+    ...buildDateFilter(query),
+    status: "geldi",
+    fee: { $gt: 0 },
+  }).select("_id fee patient");
+
+  const bookingPaid = await Payment.aggregate([
+    { $match: { booking: { $in: completed.map((b) => b._id) } } },
+    { $group: { _id: "$booking", paid: { $sum: "$amount" } } },
+  ]);
+  const paidByBooking = new Map(
+    bookingPaid.map((row) => [String(row._id), row.paid]),
+  );
+  for (const b of completed) {
+    add(b.patient, b.fee - (paidByBooking.get(String(b._id)) ?? 0));
+  }
+
+  const sales = await PatientPackage.find({
+    ...buildDateFilter(query, "soldAt"),
+    status: { $ne: "iptal" },
+  }).select("_id price patient");
+
+  const packagePaid = await Payment.aggregate([
+    { $match: { patientPackage: { $in: sales.map((s) => s._id) } } },
+    { $group: { _id: "$patientPackage", paid: { $sum: "$amount" } } },
+  ]);
+  const paidByPackage = new Map(
+    packagePaid.map((row) => [String(row._id), row.paid]),
+  );
+  for (const s of sales) {
+    add(s.patient, s.price - (paidByPackage.get(String(s._id)) ?? 0));
+  }
+
+  return { total, byPatient };
 }
 
 // Retention metrics for the cohort of patients whose first-ever visit
@@ -196,60 +242,61 @@ async function cancelReasonBreakdown(match) {
 // GET /api/admin/stats?from=&to=
 router.get("/", async (req, res) => {
   try {
-    const match = buildMatch(req.query);
+    const match = buildDateFilter(req.query);
     const fromDate = match.date?.$gte ?? null;
     const toDate = match.date?.$lte ?? null;
+    const completedMatch = { ...match, status: "geldi" };
 
     const [
       current,
-      monthlyRaw,
-      weekdayRaw,
-      perPhone,
-      topRaw,
+      revenueByMonth,
+      countByMonth,
+      revenueByWeekday,
+      countByWeekday,
+      perPatientVisits,
+      revenueByPatient,
       currentBookings,
       retention,
       sourceMix,
       cancelReasons,
       expenseSummary,
-      paymentSummary,
+      methodSummary,
+      receivables,
     ] = await Promise.all([
-      summarize(match),
-      Appointment.aggregate([
+      summarizePayments(match),
+      Payment.aggregate([
         { $match: match },
         {
           $group: {
             _id: { y: { $year: "$date" }, m: { $month: "$date" } },
             revenue: { $sum: "$amount" },
+          },
+        },
+      ]),
+      Booking.aggregate([
+        { $match: completedMatch },
+        {
+          $group: {
+            _id: { y: { $year: "$date" }, m: { $month: "$date" } },
             count: { $sum: 1 },
           },
         },
-        { $sort: { "_id.y": 1, "_id.m": 1 } },
       ]),
-      Appointment.aggregate([
+      Payment.aggregate([
         { $match: match },
-        {
-          $group: {
-            _id: { $dayOfWeek: "$date" }, // 1=Sun … 7=Sat
-            count: { $sum: 1 },
-            revenue: { $sum: "$amount" },
-          },
-        },
+        { $group: { _id: { $dayOfWeek: "$date" }, revenue: { $sum: "$amount" } } },
       ]),
-      Appointment.aggregate([
-        { $match: match },
-        { $group: { _id: "$phone", count: { $sum: 1 } } },
+      Booking.aggregate([
+        { $match: completedMatch },
+        { $group: { _id: { $dayOfWeek: "$date" }, count: { $sum: 1 } } },
       ]),
-      Appointment.aggregate([
+      Booking.aggregate([
+        { $match: completedMatch },
+        { $group: { _id: "$patient", visits: { $sum: 1 } } },
+      ]),
+      Payment.aggregate([
         { $match: match },
-        {
-          $group: {
-            _id: "$phone",
-            revenue: { $sum: "$amount" },
-            visits: { $sum: 1 },
-            firstName: { $last: "$firstName" },
-            lastName: { $last: "$lastName" },
-          },
-        },
+        { $group: { _id: "$patient", revenue: { $sum: "$amount" } } },
         { $sort: { revenue: -1 } },
         { $limit: 6 },
       ]),
@@ -261,25 +308,25 @@ router.get("/", async (req, res) => {
         { $match: match },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ]),
-      Appointment.aggregate([
+      Payment.aggregate([
         { $match: match },
-        {
-          $group: {
-            _id: { $ifNull: ["$paymentMethod", "belirtilmedi"] },
-            total: { $sum: "$amount" },
-          },
-        },
+        { $group: { _id: "$method", total: { $sum: "$amount" } } },
       ]),
+      computeReceivables(req.query),
     ]);
 
     const totalRevenue = current.revenue;
     const totalExpenses = expenseSummary[0]?.total ?? 0;
     const netRevenue = totalRevenue - totalExpenses;
-    const totalAppointments = current.count;
 
-    const returningPatients = perPhone.filter((p) => p.count > 1).length;
-    const newPatients = perPhone.filter((p) => p.count === 1).length;
-    const uniquePatients = perPhone.length;
+    // "Randevu" sayısı tahsilat sayısı değildir: bir paket ödemesi tek
+    // kayıt olduğu halde sekiz seansı karşılayabilir. Tamamlanan randevu
+    // sayısını esas alıyoruz.
+    const totalAppointments = currentBookings.completed;
+
+    const uniquePatients = perPatientVisits.length;
+    const returningPatients = perPatientVisits.filter((p) => p.visits > 1).length;
+    const newPatients = perPatientVisits.filter((p) => p.visits === 1).length;
 
     const avgPerAppointment = totalAppointments
       ? Math.round(totalRevenue / totalAppointments)
@@ -314,11 +361,11 @@ router.get("/", async (req, res) => {
         date: { $gte: new Date(fromDate.getTime() - len), $lt: fromDate },
       };
       const [prev, prevBookings] = await Promise.all([
-        summarize(prevMatch),
+        summarizePayments(prevMatch),
         summarizeBookings(prevMatch),
       ]);
       revenueChangePct = pct(totalRevenue, prev.revenue);
-      appointmentsChangePct = pct(totalAppointments, prev.count);
+      appointmentsChangePct = pct(totalAppointments, prevBookings.completed);
       monthlySummary = {
         totalBookings: currentBookings.totalBookings,
         totalBookingsChangePct: pct(
@@ -352,33 +399,82 @@ router.get("/", async (req, res) => {
       };
     }
 
-    const monthly = monthlyRaw.map((m) => ({
-      month: `${m._id.y}-${String(m._id.m).padStart(2, "0")}`,
-      revenue: m.revenue,
-      count: m.count,
-    }));
+    // Gelir ve randevu sayısı ayrı koleksiyonlardan geldiği için ay
+    // anahtarları üzerinden birleştiriliyor.
+    const monthKey = (row) => `${row._id.y}-${String(row._id.m).padStart(2, "0")}`;
+    const months = new Map();
+    for (const row of revenueByMonth) {
+      months.set(monthKey(row), { revenue: row.revenue, count: 0 });
+    }
+    for (const row of countByMonth) {
+      const key = monthKey(row);
+      const entry = months.get(key) ?? { revenue: 0, count: 0 };
+      entry.count = row.count;
+      months.set(key, entry);
+    }
+    const monthly = [...months.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, v]) => ({ month, revenue: v.revenue, count: v.count }));
 
     // Weekday distribution, Monday-first
     const weekday = WEEKDAYS.map((day, i) => {
       const dow = i === 6 ? 1 : i + 2; // Mon(idx0)→2 … Sat(idx5)→7, Sun(idx6)→1
-      const row = weekdayRaw.find((w) => w._id === dow);
-      return { day, count: row?.count ?? 0, revenue: row?.revenue ?? 0 };
+      return {
+        day,
+        count: countByWeekday.find((w) => w._id === dow)?.count ?? 0,
+        revenue: revenueByWeekday.find((w) => w._id === dow)?.revenue ?? 0,
+      };
     });
 
-    const topPatients = topRaw.map((p) => ({
-      name: `${p.firstName} ${p.lastName}`,
-      phone: p._id,
-      revenue: p.revenue,
-      visits: p.visits,
-    }));
+    const visitsByPatient = new Map(
+      perPatientVisits.map((p) => [String(p._id), p.visits]),
+    );
+    const topPatientDocs = await Patient.find({
+      _id: { $in: revenueByPatient.map((p) => p._id) },
+    }).select("firstName lastName phone");
+    const patientById = new Map(
+      topPatientDocs.map((p) => [String(p._id), p]),
+    );
+
+    const topPatients = revenueByPatient
+      .map((row) => {
+        const p = patientById.get(String(row._id));
+        if (!p) return null;
+        return {
+          name: `${p.firstName} ${p.lastName}`,
+          phone: p.phone,
+          revenue: row.revenue,
+          visits: visitsByPatient.get(String(row._id)) ?? 0,
+        };
+      })
+      .filter(Boolean);
+
+    const debtorIds = [...receivables.byPatient.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+    const debtorDocs = await Patient.find({
+      _id: { $in: debtorIds.map(([id]) => id) },
+    }).select("firstName lastName phone");
+    const debtorById = new Map(debtorDocs.map((p) => [String(p._id), p]));
+    const topDebtors = debtorIds
+      .map(([id, debt]) => {
+        const p = debtorById.get(id);
+        if (!p) return null;
+        return { name: `${p.firstName} ${p.lastName}`, phone: p.phone, debt };
+      })
+      .filter(Boolean);
 
     res.json({
       totalRevenue,
       totalExpenses,
       netRevenue,
-      paymentBreakdown: paymentSummary.map((item) => ({
-        method: item._id,
-        total: item.total,
+      sessionRevenue: current.sessionRevenue,
+      packageRevenue: current.packageRevenue,
+      outstandingReceivables: receivables.total,
+      topDebtors,
+      paymentBreakdown: PAYMENT_METHODS.map((method) => ({
+        method,
+        total: methodSummary.find((m) => m._id === method)?.total ?? 0,
       })),
       totalAppointments,
       uniquePatients,
