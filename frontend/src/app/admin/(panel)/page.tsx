@@ -1,208 +1,186 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import {
-  adminGetStats,
-  adminGetBookings,
-  adminGetPatients,
-} from "@/lib/api";
-import { periodRange, formatTRY } from "@/lib/periods";
-import { todayISO, addDays } from "@/lib/date";
+import { adminGetToday } from "@/lib/api";
+import { formatTRY } from "@/lib/periods";
 import { STATUS } from "@/lib/bookingStatus";
-import type { Booking } from "@/types";
+import { Badge, Button, EmptyState, StatTile } from "@/components/admin/ui";
+import BookingActionSheet from "@/components/admin/BookingActionSheet";
+import type { Booking, TodayResponse } from "@/types";
 
-const NAV_CARDS = [
-  { title: "Takvim", desc: "Randevuları takvimde görüntüle ve planla.", href: "/admin/takvim", emoji: "📆" },
-  { title: "Danışanlar", desc: "Danışan profilleri ve notlarını yönet.", href: "/admin/hastalar", emoji: "👥" },
-  { title: "Randevu İşlemleri", desc: "Randevu gelirlerini ve ödemeleri yönet.", href: "/admin/randevular", emoji: "💰" },
-  { title: "Giderler", desc: "Vergi ve işletme giderlerini yönet.", href: "/admin/giderler", emoji: "🧾" },
-  { title: "İstatistikler", desc: "Finans, randevu ve danışan analizleri.", href: "/admin/istatistik", emoji: "📈" },
-  { title: "Blog Yazıları", desc: "Yeni yazı ekle, düzenle veya sil.", href: "/admin/blog", emoji: "📝" },
-  { title: "SSS", desc: "Sıkça sorulan soruları yönet.", href: "/admin/sss", emoji: "❓" },
-];
+const STATUS_TONE = {
+  geldi: "emerald",
+  gelmedi: "amber",
+  iptal: "gray",
+  planlandi: "brand",
+} as const;
 
-function StatTile({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p
-        className={`text-2xl font-bold mt-1 tabular-nums ${
-          accent ? "text-brand-600" : "text-gray-900"
-        }`}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function BookingRow({ b, showDate }: { b: Booking; showDate?: boolean }) {
-  return (
-    <div className="flex items-center gap-3 py-2.5">
-      <span className="text-sm font-semibold text-gray-900 tabular-nums w-24 shrink-0">
-        {showDate && (
-          <span className="text-gray-500 font-medium">
-            {new Date(b.date).toLocaleDateString("tr-TR", {
-              day: "numeric",
-              month: "short",
-            })}{" "}
-          </span>
-        )}
-        {b.time || "—"}
-      </span>
-      <span className="flex-1 min-w-0 text-sm text-gray-900 truncate">
-        {b.patient.firstName} {b.patient.lastName}
-      </span>
-      <span
-        className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${STATUS[b.status].badge}`}
-      >
-        {STATUS[b.status].label}
-      </span>
-    </div>
-  );
-}
-
-export default function AdminDashboardPage() {
+export default function AdminTodayPage() {
   const { data: session } = useSession();
   const token = (session as { backendToken?: string })?.backendToken ?? "";
 
+  const [data, setData] = useState<TodayResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [monthRevenue, setMonthRevenue] = useState(0);
-  const [monthCount, setMonthCount] = useState(0);
-  const [patientCount, setPatientCount] = useState(0);
-  const [todayBookings, setTodayBookings] = useState<Booking[]>([]);
-  const [upcoming, setUpcoming] = useState<Booking[]>([]);
+  const [acting, setActing] = useState<Booking | null>(null);
+
+  const load = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      setData(await adminGetToday(token));
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
 
   useEffect(() => {
-    const load = async () => {
-      if (!token) return;
-      setLoading(true);
-      const today = todayISO();
-      const { from, to } = periodRange("thisMonth");
-      try {
-        const [stats, patients, todayB, upcomingB] = await Promise.all([
-          adminGetStats(token, { from, to }),
-          adminGetPatients(token),
-          adminGetBookings(token, { from: today, to: today }),
-          adminGetBookings(token, {
-            from: addDays(today, 1),
-            to: addDays(today, 60),
-          }),
-        ]);
-        setMonthRevenue(stats.totalRevenue);
-        setMonthCount(stats.totalAppointments);
-        setPatientCount(patients.total);
-        setTodayBookings(todayB);
-        setUpcoming(upcomingB.slice(0, 6));
-      } finally {
-        setLoading(false);
-      }
-    };
     load();
-  }, [token]);
+  }, [load]);
+
+  const todayLabel = new Date().toLocaleDateString("tr-TR", {
+    day: "numeric",
+    month: "long",
+    weekday: "long",
+  });
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Dashboard</h1>
-      <p className="text-gray-500 mb-8">
-        Bugüne ve bu aya dair genel bakış.
-      </p>
+      <h1 className="text-2xl font-bold text-gray-900">Bugün</h1>
+      <p className="text-gray-500 mb-6">{todayLabel}</p>
 
-      {/* Quick stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatTile
-          label="Bugünkü Randevu"
-          value={loading ? "…" : String(todayBookings.length)}
+          label="Randevu"
+          value={loading ? "…" : String(data?.bookings.length ?? 0)}
         />
         <StatTile
-          label="Bu Ay Kazanç"
-          value={loading ? "…" : formatTRY(monthRevenue)}
-          accent
+          label="İşlenmedi"
+          value={loading ? "…" : String(data?.unprocessedCount ?? 0)}
+          accent={(data?.unprocessedCount ?? 0) > 0}
         />
         <StatTile
-          label="Bu Ay Tamamlanan"
-          value={loading ? "…" : String(monthCount)}
+          label="Bugün Tahsil Edilen"
+          value={loading ? "…" : formatTRY(data?.collectedToday ?? 0)}
         />
         <StatTile
-          label="Toplam Danışan"
-          value={loading ? "…" : String(patientCount)}
+          label="Bekleyen Alacak"
+          value={loading ? "…" : formatTRY(data?.outstandingReceivables ?? 0)}
         />
       </div>
 
-      {/* Today + upcoming */}
-      <div className="grid lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white border border-gray-200 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-900">Bugünün Randevuları</h2>
-            <Link
-              href="/admin/takvim"
-              className="text-sm text-brand-600 hover:underline"
-            >
-              Takvim →
-            </Link>
-          </div>
-          {loading ? (
-            <p className="text-gray-400 text-sm">Yükleniyor…</p>
-          ) : todayBookings.length === 0 ? (
-            <p className="text-gray-400 text-sm">Bugün randevu yok.</p>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {todayBookings.map((b) => (
-                <BookingRow key={b._id} b={b} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white border border-gray-200 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-900">Yaklaşan Randevular</h2>
-            <Link
-              href="/admin/takvim"
-              className="text-sm text-brand-600 hover:underline"
-            >
-              Takvim →
-            </Link>
-          </div>
-          {loading ? (
-            <p className="text-gray-400 text-sm">Yükleniyor…</p>
-          ) : upcoming.length === 0 ? (
-            <p className="text-gray-400 text-sm">Yaklaşan randevu yok.</p>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {upcoming.map((b) => (
-                <BookingRow key={b._id} b={b} showDate />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Navigation cards */}
-      <h2 className="font-semibold text-gray-900 mb-4">Bölümler</h2>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {NAV_CARDS.map((card) => (
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-900">Günün Programı</h2>
           <Link
-            key={card.href}
-            href={card.href}
-            className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow"
+            href="/admin/takvim"
+            className="text-sm text-brand-600 hover:underline"
           >
-            <div className="text-3xl mb-3">{card.emoji}</div>
-            <h3 className="font-bold text-gray-900 mb-1">{card.title}</h3>
-            <p className="text-gray-500 text-sm">{card.desc}</p>
+            Takvim →
           </Link>
-        ))}
+        </div>
+
+        {loading ? (
+          <p className="text-gray-400 text-sm">Yükleniyor…</p>
+        ) : data && data.bookings.length > 0 ? (
+          <div className="divide-y divide-gray-100">
+            {data.bookings.map((b) => (
+              <div
+                key={b._id}
+                className="flex items-center gap-3 py-3 flex-wrap"
+              >
+                <span className="text-sm font-semibold text-gray-900 tabular-nums w-14 shrink-0">
+                  {b.time || "—"}
+                </span>
+                <span className="flex-1 min-w-0 text-sm text-gray-900 truncate">
+                  {b.patient.firstName} {b.patient.lastName}
+                </span>
+                {b.status === "geldi" && b.fee > 0 && (
+                  <span className="text-sm text-gray-500 tabular-nums">
+                    {formatTRY(b.fee)}
+                  </span>
+                )}
+                {b.status === "planlandi" ? (
+                  <Button size="sm" onClick={() => setActing(b)}>
+                    İşle
+                  </Button>
+                ) : (
+                  <Badge tone={STATUS_TONE[b.status]}>
+                    {STATUS[b.status].label}
+                  </Badge>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="Bugün randevu yok"
+            description="Takvimden yeni randevu ekleyebilirsin."
+            action={
+              <Link href="/admin/takvim">
+                <Button>Takvime git</Button>
+              </Link>
+            }
+          />
+        )}
       </div>
+
+      <h2 className="font-semibold text-gray-900 mb-3">Dikkat</h2>
+      {loading ? (
+        <p className="text-gray-400 text-sm">Yükleniyor…</p>
+      ) : (
+        <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100">
+          <Link
+            href="/admin/finans"
+            className="flex items-center justify-between px-6 py-4 hover:bg-gray-50"
+          >
+            <span className="text-sm text-gray-700">Tahsil edilmemiş tutar</span>
+            <span className="text-sm font-semibold text-amber-600 tabular-nums">
+              {formatTRY(data?.outstandingReceivables ?? 0)}
+            </span>
+          </Link>
+          <Link
+            href="/admin/talepler"
+            className="flex items-center justify-between px-6 py-4 hover:bg-gray-50"
+          >
+            <span className="text-sm text-gray-700">
+              Bekleyen randevu talebi
+            </span>
+            <span className="text-sm font-semibold text-brand-600">
+              {data?.pendingRequests ?? 0}
+            </span>
+          </Link>
+          {(data?.endingPackages.length ?? 0) > 0 && (
+            <div className="px-6 py-4">
+              <p className="text-sm text-gray-700 mb-2">Paketi bitmek üzere</p>
+              <ul className="space-y-1">
+                {data?.endingPackages.map((p, i) => (
+                  <li key={i} className="text-sm text-gray-500">
+                    <Link
+                      href={`/admin/hastalar/${p.patient._id}`}
+                      className="hover:text-brand-600"
+                    >
+                      {p.patient.firstName} {p.patient.lastName}
+                    </Link>{" "}
+                    · {p.name} · {p.remainingSessions} seans kaldı
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      <BookingActionSheet
+        booking={acting}
+        token={token}
+        onClose={() => setActing(null)}
+        onSaved={() => {
+          setActing(null);
+          load();
+        }}
+      />
     </div>
   );
 }
