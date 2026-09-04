@@ -5,6 +5,7 @@ const Payment = require("../../models/Payment");
 const { protect } = require("../../middleware/auth");
 const { buildDateFilter, toUtcMidnight } = require("../../lib/dateRange");
 const { recalcVisitTypes } = require("../../lib/visitType");
+const { findConflict } = require("../../lib/bookingConflict");
 
 const router = express.Router();
 router.use(protect);
@@ -90,6 +91,21 @@ router.post("/", async (req, res) => {
           },
         ],
       });
+    }
+
+    // Çakışma bilgi amaçlı: diyetisyen bilerek üst üste randevu yazabilir,
+    // bu yüzden engellemiyoruz — ?force=true ile geçiliyor.
+    if (req.query.force !== "true") {
+      const conflict = await findConflict({
+        date: toUtcMidnight(data.date),
+        time: data.time,
+      });
+      if (conflict) {
+        return res.status(409).json({
+          message: "Bu saatte başka bir randevu var.",
+          conflict,
+        });
+      }
     }
 
     const created = await Booking.create({
@@ -204,6 +220,22 @@ router.put("/:id", async (req, res) => {
       await Payment.deleteMany({ booking: existing._id });
       data.fee = 0;
       data.patientPackage = null;
+    }
+
+    // Tarih/saat değişmiş olabilir; taşınan randevu başkasının saatine
+    // oturuyorsa uyar. Kendisi hariç tutulur.
+    if (req.query.force !== "true") {
+      const conflict = await findConflict({
+        date: data.date ?? existing.date,
+        time: data.time !== undefined ? data.time : existing.time,
+        excludeId: existing._id,
+      });
+      if (conflict) {
+        return res.status(409).json({
+          message: "Bu saatte başka bir randevu var.",
+          conflict,
+        });
+      }
     }
 
     const booking = await Booking.findByIdAndUpdate(req.params.id, data, {
