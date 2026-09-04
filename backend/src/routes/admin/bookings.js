@@ -29,6 +29,14 @@ const bookingSchema = z.object({
   note: z.string().optional(),
 });
 
+// Haftalık seri randevu gövdesi. Durum alanları yok — seri randevular
+// daima "planlandi" olarak doğar.
+const recurringSchema = bookingSchema
+  .omit({ status: true, cancelReason: true })
+  .extend({
+    repeatWeeks: z.number().int().min(1).max(26),
+  });
+
 // Randevuyu sonuçlandırma gövdesi. Ücret ve tahsilat ayrı alanlar:
 // ücret girilip tahsilat girilmezse fark alacak olarak kalır.
 const completeSchema = z
@@ -125,6 +133,59 @@ router.post("/", async (req, res) => {
         .json({ message: "Validation error", errors: err.errors });
     console.error("Booking POST error:", err);
     res.status(500).json({ message: "Server error", detail: err.message });
+  }
+});
+
+// POST /api/admin/bookings/recurring
+// Haftalık seri randevu. Çakışan hafta atlanır, kalanlar oluşturulur —
+// tek bir dolu saat yüzünden serinin tamamı iptal olmamalı.
+router.post("/recurring", async (req, res) => {
+  try {
+    const data = recurringSchema.parse(req.body);
+    const start = toUtcMidnight(data.date);
+
+    const created = [];
+    const skipped = [];
+
+    for (let week = 0; week < data.repeatWeeks; week += 1) {
+      const date = new Date(start);
+      date.setUTCDate(date.getUTCDate() + week * 7);
+
+      const conflict = await findConflict({ date, time: data.time });
+      if (conflict) {
+        skipped.push({
+          date: date.toISOString().slice(0, 10),
+          reason: "Bu saatte başka bir randevu var.",
+        });
+        continue;
+      }
+
+      const booking = await Booking.create({
+        patient: data.patient,
+        date,
+        time: data.time ?? "",
+        note: data.note ?? "",
+      });
+      created.push(booking);
+    }
+
+    // Ziyaret tipleri seri tamamlandıktan sonra tek seferde hesaplanır.
+    await recalcVisitTypes(data.patient);
+
+    const populated = await Booking.find({
+      _id: { $in: created.map((b) => b._id) },
+    })
+      .populate("patient", "firstName lastName phone")
+      .sort({ date: 1 });
+
+    res.status(201).json({ created: populated, skipped });
+  } catch (err) {
+    if (err.name === "ZodError")
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: err.errors });
+    console.error("Recurring booking error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
