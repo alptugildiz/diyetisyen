@@ -47,8 +47,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return buildMetadata({
-    title: post.title,
-    description: truncate(post.excerpt || post.content, 155),
+    // Panelden girilen SEO alanları önceliklidir; boşsa başlık/özete düşer.
+    title: post.metaTitle || post.title,
+    description:
+      post.metaDescription || truncate(post.excerpt || post.content, 155),
     path: `/blog/${post.slug}`,
     image: post.coverImage || undefined,
     type: "article",
@@ -98,7 +100,7 @@ export default async function BlogDetailPage({ params }: Props) {
         <div className="relative w-full h-72 md:h-96 mt-0">
           <Image
             src={post.coverImage}
-            alt={post.title}
+            alt={post.coverImageAlt || post.title}
             fill
             priority
             sizes="100vw"
@@ -196,7 +198,7 @@ export default async function BlogDetailPage({ params }: Props) {
                     <div className="relative w-full h-44">
                       <Image
                         src={r.coverImage}
-                        alt={r.title}
+                        alt={r.coverImageAlt || r.title}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover"

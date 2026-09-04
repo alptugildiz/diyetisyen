@@ -25,6 +25,10 @@ export default function BlogEditorPage({ params }: Props) {
   const [excerpt, setExcerpt] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [tags, setTags] = useState("");
+  const [slug, setSlug] = useState("");
+  const [coverImageAlt, setCoverImageAlt] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -71,6 +75,10 @@ export default function BlogEditorPage({ params }: Props) {
         setTitle(post.title);
         setExcerpt(post.excerpt);
         setCoverImage(post.coverImage || "");
+        setCoverImageAlt(post.coverImageAlt ?? "");
+        setSlug(post.slug ?? "");
+        setMetaTitle(post.metaTitle ?? "");
+        setMetaDescription(post.metaDescription ?? "");
         setTags(post.tags?.join(", ") ?? "");
         setStatus(post.status);
         editor?.commands.setContent(post.content);
@@ -98,6 +106,11 @@ export default function BlogEditorPage({ params }: Props) {
         title,
         excerpt,
         coverImage,
+        coverImageAlt,
+        metaTitle,
+        metaDescription,
+        // Boş bırakılırsa sunucu başlıktan üretir; dolu ise korunur.
+        ...(slug.trim() ? { slug: slug.trim() } : {}),
         tags: tags
           .split(",")
           .map((t) => t.trim())
@@ -241,6 +254,84 @@ export default function BlogEditorPage({ params }: Props) {
           </div>
         </div>
 
+        <details className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+          <summary className="font-semibold text-gray-900 cursor-pointer select-none">
+            SEO ayarları
+          </summary>
+          <p className="text-sm text-gray-500 mt-2 mb-4">
+            Boş bırakılırsa yazının başlığı ve özeti kullanılır.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Meta başlık
+                </label>
+                <CharCounter value={metaTitle} ideal={60} max={70} />
+              </div>
+              <input
+                type="text"
+                value={metaTitle}
+                onChange={(e) => setMetaTitle(e.target.value)}
+                maxLength={70}
+                className={INPUT_CLS}
+                placeholder="Google sonuçlarında görünecek başlık"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Meta açıklama
+                </label>
+                <CharCounter value={metaDescription} ideal={160} max={200} />
+              </div>
+              <textarea
+                value={metaDescription}
+                onChange={(e) => setMetaDescription(e.target.value)}
+                maxLength={200}
+                rows={3}
+                className={`${INPUT_CLS} resize-none`}
+                placeholder="Arama sonucunda başlığın altında görünen açıklama"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kapak görseli alt metni
+              </label>
+              <input
+                type="text"
+                value={coverImageAlt}
+                onChange={(e) => setCoverImageAlt(e.target.value)}
+                maxLength={200}
+                className={INPUT_CLS}
+                placeholder="Görselde ne var? Görme engelliler ve Google için."
+              />
+            </div>
+
+            {!isNew && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Adres (slug)
+                </label>
+                <input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  className={INPUT_CLS}
+                  placeholder="kilo-verirken-protein"
+                />
+                <p className="text-xs text-amber-600 mt-1">
+                  Yayındaki bir yazının adresini değiştirmek, o adrese verilmiş
+                  bağlantıları ve arama sıralamasını kaybettirir.
+                </p>
+              </div>
+            )}
+          </div>
+        </details>
+
         {/* Tiptap Editor */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -304,5 +395,32 @@ export default function BlogEditorPage({ params }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Meta alanları için karakter sayacı. Google'ın kırpma eşiğini aşınca
+ *  sarıya, sert sınıra dayanınca kırmızıya döner. */
+function CharCounter({
+  value,
+  ideal,
+  max,
+}: {
+  value: string;
+  ideal: number;
+  max: number;
+}) {
+  const len = value.length;
+  const tone =
+    len === 0
+      ? "text-gray-400"
+      : len > max
+        ? "text-red-500"
+        : len > ideal
+          ? "text-amber-600"
+          : "text-emerald-600";
+  return (
+    <span className={`text-xs tabular-nums ${tone}`}>
+      {len}/{ideal}
+    </span>
   );
 }

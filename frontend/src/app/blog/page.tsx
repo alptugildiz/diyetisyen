@@ -128,7 +128,7 @@ export default async function BlogPage({ searchParams }: Props) {
                     <div className="relative w-full h-48">
                       <Image
                         src={post.coverImage}
-                        alt={post.title}
+                        alt={post.coverImageAlt || post.title}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         priority={i === 0}

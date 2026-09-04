@@ -5,6 +5,9 @@ export interface Post {
   excerpt: string;
   content: string;
   coverImage: string;
+  coverImageAlt?: string;
+  metaTitle?: string;
+  metaDescription?: string;
   tags: string[];
   status: "draft" | "published";
   publishedAt: string;
