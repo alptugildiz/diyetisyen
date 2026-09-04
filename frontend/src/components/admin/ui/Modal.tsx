@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function Modal({
   open,
@@ -15,6 +15,8 @@ export default function Modal({
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
   // Escape ile kapat, açıkken arka planı kaydırma.
   useEffect(() => {
     if (!open) return;
@@ -29,6 +31,18 @@ export default function Modal({
     };
   }, [open, onClose]);
 
+  // Açılışta odağı modala al, kapanışta çağıran öğeye geri ver — klavyeyle
+  // gezen kullanıcı modal kapanınca sayfanın başına düşmesin.
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const first = panelRef.current?.querySelector<HTMLElement>(
+      'input, select, textarea, button, [href], [tabindex]:not([tabindex="-1"])',
+    );
+    (first ?? panelRef.current)?.focus();
+    return () => previous?.focus?.();
+  }, [open]);
+
   if (!open) return null;
 
   return (
@@ -39,9 +53,11 @@ export default function Modal({
       onClick={onClose}
     >
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         className="bg-white w-full md:max-w-lg max-h-[90vh] overflow-y-auto rounded-t-2xl md:rounded-2xl p-6 shadow-xl"
       >

@@ -55,7 +55,7 @@ export default function AdminNav({
       <nav className="flex-1 p-4 overflow-y-auto">
         {GROUPS.map((group) => (
           <div key={group.key} className="mb-5 last:mb-0">
-            <p className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            <p className="px-3 mb-1 text-xs font-semibold text-gray-400">
               {group.label}
             </p>
             <ul className="space-y-1">
@@ -64,12 +64,20 @@ export default function AdminNav({
                   <Link
                     href={item.href}
                     aria-current={isActive(pathname, item.href) ? "page" : undefined}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isActive(pathname, item.href)
                         ? "bg-brand-50 text-brand-600"
                         : "text-gray-700 hover:bg-gray-50"
                     }`}
                   >
+                    {/* Aktif sayfayı renkten önce kenar şeridi belli etsin;
+                        göz menüyü tararken tek sabit noktaya bakar. */}
+                    {isActive(pathname, item.href) && (
+                      <span
+                        aria-hidden
+                        className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-brand-500"
+                      />
+                    )}
                     <span aria-hidden>{item.icon}</span>
                     <span className="flex-1">{item.label}</span>
                     {item.href === "/admin/talepler" && pendingRequests > 0 && (
