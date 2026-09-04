@@ -29,6 +29,7 @@ import {
   Field,
   INPUT_CLS,
   Modal,
+  SkeletonRows,
   StatTile,
   Tabs,
   useConfirm,
@@ -126,7 +127,7 @@ export default function PatientDetailPage({
     fetchDetail();
   };
 
-  if (loading) return <p className="text-gray-400">Yükleniyor…</p>;
+  if (loading) return <SkeletonRows count={6} />;
   if (notFound || !patient)
     return (
       <div>

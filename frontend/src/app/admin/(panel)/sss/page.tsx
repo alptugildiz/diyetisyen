@@ -15,6 +15,8 @@ import {
   Field,
   INPUT_CLS,
   Modal,
+  PageHeader,
+  SkeletonRows,
   useConfirm,
   useToast,
   type Column,
@@ -147,15 +149,13 @@ export default function AdminSSSPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 gap-3">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Sıkça Sorulan Sorular
-        </h1>
-        <Button onClick={openNew}>+ Yeni Soru</Button>
-      </div>
+      <PageHeader
+        title="Sıkça Sorulan Sorular"
+        action={<Button onClick={openNew}>+ Yeni Soru</Button>}
+      />
 
       {loading ? (
-        <p className="text-gray-400">Yükleniyor…</p>
+        <SkeletonRows count={6} />
       ) : (
         <DataTable
           columns={columns}

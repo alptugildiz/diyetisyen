@@ -219,7 +219,11 @@ export default function AdminTakvimPage() {
         />
       </div>
 
-      {loading && <p className="text-gray-400 mt-3 text-sm">Yükleniyor…</p>}
+      {loading && (
+        <p className="text-gray-400 mt-3 text-sm" role="status">
+          Randevular yükleniyor…
+        </p>
+      )}
 
       <DayPanel
         dayIso={selectedDay}

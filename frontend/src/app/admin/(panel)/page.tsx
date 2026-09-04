@@ -6,7 +6,15 @@ import Link from "next/link";
 import { adminGetToday } from "@/lib/api";
 import { formatTRY } from "@/lib/periods";
 import { STATUS } from "@/lib/bookingStatus";
-import { Badge, Button, EmptyState, StatTile } from "@/components/admin/ui";
+import {
+  Badge,
+  Button,
+  EmptyState,
+  PageHeader,
+  SkeletonRows,
+  SkeletonTiles,
+  StatTile,
+} from "@/components/admin/ui";
 import BookingActionSheet from "@/components/admin/BookingActionSheet";
 import type { Booking, TodayResponse } from "@/types";
 
@@ -47,28 +55,33 @@ export default function AdminTodayPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Bugün</h1>
-      <p className="text-gray-500 mb-6">{todayLabel}</p>
+      <PageHeader title="Bugün" subtitle={todayLabel} />
 
+      {loading ? (
+        <div className="mb-8">
+          <SkeletonTiles count={4} />
+        </div>
+      ) : (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatTile
           label="Randevu"
-          value={loading ? "…" : String(data?.bookings.length ?? 0)}
+          value={String(data?.bookings.length ?? 0)}
         />
         <StatTile
           label="İşlenmedi"
-          value={loading ? "…" : String(data?.unprocessedCount ?? 0)}
+          value={String(data?.unprocessedCount ?? 0)}
           accent={(data?.unprocessedCount ?? 0) > 0}
         />
         <StatTile
           label="Bugün Tahsil Edilen"
-          value={loading ? "…" : formatTRY(data?.collectedToday ?? 0)}
+          value={formatTRY(data?.collectedToday ?? 0)}
         />
         <StatTile
           label="Bekleyen Alacak"
-          value={loading ? "…" : formatTRY(data?.outstandingReceivables ?? 0)}
+          value={formatTRY(data?.outstandingReceivables ?? 0)}
         />
       </div>
+      )}
 
       <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -82,7 +95,7 @@ export default function AdminTodayPage() {
         </div>
 
         {loading ? (
-          <p className="text-gray-400 text-sm">Yükleniyor…</p>
+          <SkeletonRows count={4} />
         ) : data && data.bookings.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {data.bookings.map((b) => (
@@ -128,7 +141,7 @@ export default function AdminTodayPage() {
 
       <h2 className="font-semibold text-gray-900 mb-3">Dikkat</h2>
       {loading ? (
-        <p className="text-gray-400 text-sm">Yükleniyor…</p>
+        <SkeletonRows count={3} />
       ) : (
         <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100">
           <Link

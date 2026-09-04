@@ -9,6 +9,8 @@ import {
   Button,
   DataTable,
   EmptyState,
+  PageHeader,
+  SkeletonRows,
   useConfirm,
   type Column,
 } from "@/components/admin/ui";
@@ -102,15 +104,17 @@ export default function AdminBlogPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 gap-3">
-        <h1 className="text-2xl font-bold text-gray-900">Blog Yazıları</h1>
-        <Link href="/admin/blog/yeni">
-          <Button>+ Yeni Yazı</Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Blog Yazıları"
+        action={
+          <Link href="/admin/blog/yeni">
+            <Button>+ Yeni Yazı</Button>
+          </Link>
+        }
+      />
 
       {loading ? (
-        <p className="text-gray-400">Yükleniyor…</p>
+        <SkeletonRows count={6} />
       ) : (
         <DataTable
           columns={columns}

@@ -18,6 +18,8 @@ import {
   Field,
   INPUT_CLS,
   Modal,
+  PageHeader,
+  SkeletonRows,
   useConfirm,
 } from "@/components/admin/ui";
 import type { AppointmentRequest } from "@/types";
@@ -125,15 +127,13 @@ export default function AdminTaleplerPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">
-        Randevu Talepleri
-      </h1>
-      <p className="text-gray-500 mb-6">
-        Siteden gelen talepler burada toplanır.
-      </p>
+      <PageHeader
+        title="Randevu Talepleri"
+        subtitle="Siteden gelen talepler burada toplanır."
+      />
 
       {loading ? (
-        <p className="text-gray-400">Yükleniyor…</p>
+        <SkeletonRows count={5} />
       ) : requests.length === 0 ? (
         <EmptyState
           title="Bekleyen talep yok"

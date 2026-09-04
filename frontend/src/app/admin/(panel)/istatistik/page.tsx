@@ -21,7 +21,11 @@ import BarSeriesChart from "@/components/admin/stats/BarSeriesChart";
 import DonutChart from "@/components/admin/stats/DonutChart";
 import TopPatientsCard from "@/components/admin/stats/TopPatientsCard";
 import ReceivablesPanel from "@/components/admin/stats/ReceivablesPanel";
-import { EmptyState } from "@/components/admin/ui";
+import {
+  EmptyState,
+  PageHeader,
+  SkeletonTiles,
+} from "@/components/admin/ui";
 import type { StatsResponse } from "@/types";
 
 const PROCESS_STATUS_COLOR = {
@@ -103,17 +107,15 @@ export default function AdminIstatistikPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">İstatistikler</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Seçilen döneme ait finans, randevu ve danışan özeti
-        </p>
-      </div>
+      <PageHeader
+        title="İstatistikler"
+        subtitle="Seçilen döneme ait finans, randevu ve danışan özeti"
+      />
 
       <PeriodFilter onChange={setRange} />
 
       {loading ? (
-        <p className="text-gray-400">Yükleniyor…</p>
+        <SkeletonTiles count={6} columns="grid-cols-2 lg:grid-cols-3" />
       ) : isEmpty || !stats ? (
         <EmptyState
           title="Bu dönemde veri yok"
