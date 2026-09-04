@@ -61,17 +61,21 @@ export default function Hero() {
       <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center justify-center gap-12">
         {/* Sol: Metin */}
         <div className="flex-1 text-center lg:text-left">
-          <p className="font-cabin hero-eyebrow opacity-0 text-brand-600 font-semibold tracking-widest uppercase text-sm mb-4">
-            Beslenme ve Diyet Danışmanlığı
-          </p>
+          {/* Üst satır artık H1'in içinde: sayfanın tek başlığı hedef aramayı
+              ("lüleburgaz diyetisyen") kapsıyor. Görsel olarak eskisiyle aynı
+              yerde duruyor, GSAP hedefleri değişmedi. */}
           <h1 className="font-oswald hero-title opacity-0 text-5xl md:text-7xl font-bold text-gray-900 leading-tight mb-6">
+            <span className="font-cabin hero-eyebrow opacity-0 block text-brand-600 font-semibold tracking-widest uppercase text-sm mb-4">
+              Lüleburgaz &amp; Kırklareli Diyetisyen
+            </span>
             Sağlıklı Beslenme,
             <br />
             <span className="font-oswald text-brand-500">Mutlu Yaşam</span>
           </h1>
           <p className="font-hind-vadodara hero-subtitle opacity-0 text-xl text-gray-600 mb-10 max-w-xl leading-relaxed">
-            Kişiye özel beslenme programları ve birebir danışmanlık ile
-            hedeflerinize ulaşın.
+            Diyetisyen Beyza Şule Kahraman ile Lüleburgaz&apos;da kişiye özel
+            beslenme programları ve birebir danışmanlık — hedeflerinize
+            sürdürülebilir biçimde ulaşın.
           </p>
           <div className="hero-cta opacity-0 flex flex-row flex-wrap gap-3 justify-center lg:justify-start relative top">
             <button

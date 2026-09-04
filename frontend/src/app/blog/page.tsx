@@ -1,12 +1,43 @@
 import Link from "next/link";
+import Image from "next/image";
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import JsonLd from "@/components/JsonLd";
 import { getPosts, getTags } from "@/lib/api";
+import { breadcrumbSchema, buildMetadata } from "@/lib/seo";
 
 export const revalidate = 60; // ISR — revalidate every 60 seconds
 
 interface Props {
   searchParams: Promise<{ page?: string; tag?: string }>;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: Props): Promise<Metadata> {
+  const { page: pageParam, tag } = await searchParams;
+  const page = Number(pageParam) || 1;
+
+  // Kendine referans veren canonical: etiket ve sayfa filtreleri farklı URL'ler
+  // olduğu için her biri kendini işaret eder, aksi hâlde Google hepsini
+  // /blog'un kopyası sayar.
+  const query = [tag ? `tag=${encodeURIComponent(tag)}` : "", page > 1 ? `page=${page}` : ""]
+    .filter(Boolean)
+    .join("&");
+  const path = query ? `/blog?${query}` : "/blog";
+
+  const title = tag
+    ? `${tag} Yazıları${page > 1 ? ` — Sayfa ${page}` : ""}`
+    : page > 1
+      ? `Blog — Sayfa ${page}`
+      : "Beslenme ve Diyet Blogu";
+
+  const description = tag
+    ? `${tag} konusunda diyetisyen Beyza Şule Kahraman'ın yazıları: bilimsel, uygulanabilir beslenme önerileri ve tarifler.`
+    : "Sağlıklı beslenme, kilo yönetimi ve tarifler üzerine diyetisyen Beyza Şule Kahraman'ın yazıları. Bilimsel ve uygulanabilir öneriler.";
+
+  return buildMetadata({ title, description, path });
 }
 
 export default async function BlogPage({ searchParams }: Props) {
@@ -25,6 +56,12 @@ export default async function BlogPage({ searchParams }: Props) {
 
   return (
     <>
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Ana Sayfa", path: "/" },
+          { name: "Blog", path: "/blog" },
+        ])}
+      />
       <Navbar />
 
       {/* Hero başlık */}
@@ -88,14 +125,16 @@ export default async function BlogPage({ searchParams }: Props) {
                   className="group bg-brand-50 rounded-2xl overflow-hidden shadow-lg hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 flex flex-col"
                 >
                   {post.coverImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={post.coverImage}
-                      alt={post.title}
-                      className="w-full h-48 object-cover"
-                      loading={i === 0 ? "eager" : "lazy"}
-                      fetchPriority={i === 0 ? "high" : "auto"}
-                    />
+                    <div className="relative w-full h-48">
+                      <Image
+                        src={post.coverImage}
+                        alt={post.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        priority={i === 0}
+                        className="object-cover"
+                      />
+                    </div>
                   ) : (
                     <div className="w-full h-48 bg-brand-100 flex items-center justify-center">
                       <span className="text-5xl">🥗</span>

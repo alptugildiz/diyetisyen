@@ -3,6 +3,8 @@ import Script from "next/script";
 import localFont from "next/font/local";
 import GsapProvider from "@/providers/GsapProvider";
 import AppointmentModal from "@/components/AppointmentModal";
+import JsonLd from "@/components/JsonLd";
+import { SITE, siteGraph } from "@/lib/seo";
 import "./globals.css";
 
 const nexa = localFont({
@@ -18,30 +20,33 @@ const nexa = localFont({
 
 const GA_ID = "G-JKSWXYLYTP";
 
+const HOME_TITLE = "Lüleburgaz Diyetisyen | Dyt. Beyza Şule Kahraman";
+const HOME_DESCRIPTION =
+  "Lüleburgaz ve Kırklareli'de kişiye özel diyet programları. Dyt. Beyza Şule Kahraman ile kilo verme, sporcu ve hastalıklara özel beslenme danışmanlığı.";
+
 export const metadata: Metadata = {
   title: {
-    default: "Trakya Diyetisyen | Beyza Şule Kahraman",
+    default: HOME_TITLE,
     template: "%s | Beyza Şule Kahraman",
   },
-  description:
-    "Lüleburgaz ve Trakya bölgesinin uzman diyetisyeni Beyza Şule Kahraman ile kişiye özel diyet programları ve sağlıklı beslenme danışmanlığı.",
-  metadataBase: new URL("https://trakyadyt.com"),
+  description: HOME_DESCRIPTION,
+  metadataBase: new URL(SITE.url),
   alternates: { canonical: "/" },
   icons: { icon: "/favicon.svg" },
   openGraph: {
     type: "website",
     locale: "tr_TR",
-    url: "https://trakyadyt.com",
-    siteName: "Trakya Diyetisyen Beyza Şule Kahraman",
-    title: "Trakya Diyetisyen | Beyza Şule Kahraman",
-    description:
-      "Lüleburgaz ve Trakya bölgesinin uzman diyetisyeni Beyza Şule Kahraman ile kişiye özel diyet programları ve sağlıklı beslenme danışmanlığı.",
+    url: SITE.url,
+    siteName: SITE.name,
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    images: [{ url: SITE.defaultImage, alt: SITE.person }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Trakya Diyetisyen | Beyza Şule Kahraman",
-    description:
-      "Lüleburgaz ve Trakya bölgesinin uzman diyetisyeni Beyza Şule Kahraman ile kişiye özel diyet programları ve sağlıklı beslenme danışmanlığı.",
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    images: [SITE.defaultImage],
   },
   robots: {
     index: true,
@@ -58,32 +63,7 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "LocalBusiness",
-              "name": "Diyetisyen Beyza Şule Kahraman",
-              "description": "Lüleburgaz ve Trakya bölgesinin uzman diyetisyeni. Kişiye özel diyet programları ve sağlıklı beslenme danışmanlığı.",
-              "url": "https://trakyadyt.com",
-              "telephone": "+90-542-689-80-44",
-              "address": {
-                "@type": "PostalAddress",
-                "addressLocality": "Lüleburgaz",
-                "addressRegion": "Kırklareli",
-                "addressCountry": "TR"
-              },
-              "areaServed": [
-                { "@type": "City", "name": "Lüleburgaz" },
-                { "@type": "City", "name": "Kırklareli" },
-                { "@type": "AdministrativeArea", "name": "Trakya" }
-              ],
-              "priceRange": "$$",
-              "knowsAbout": ["Beslenme", "Diyet", "Kilo Yönetimi", "Sağlıklı Beslenme"]
-            }),
-          }}
-        />
+        <JsonLd data={siteGraph()} />
         {/* Preconnect for external origins */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />

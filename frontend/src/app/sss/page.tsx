@@ -2,10 +2,19 @@ import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FaqAccordion from "@/components/FaqAccordion";
+import JsonLd from "@/components/JsonLd";
 import { getFaqs } from "@/lib/api";
+import { breadcrumbSchema, buildMetadata, faqPageSchema } from "@/lib/seo";
 import type { Faq } from "@/types";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = buildMetadata({
+  title: "Sıkça Sorulan Sorular",
+  description:
+    "Diyetisyen randevusu, danışmanlık süreci, vücut analizi ve beslenme programları hakkında en çok sorulan soruların yanıtları — Lüleburgaz.",
+  path: "/sss",
+});
 
 export default async function SSSPage() {
   let faqs: Faq[];
@@ -17,6 +26,15 @@ export default async function SSSPage() {
 
   return (
     <>
+      {/* FAQPage şeması yalnızca gerçekten soru varken basılır — boş
+          mainEntity Google tarafından geçersiz yapısal veri sayılıyor. */}
+      {faqs.length > 0 && <JsonLd data={faqPageSchema(faqs)} />}
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Ana Sayfa", path: "/" },
+          { name: "Sıkça Sorulan Sorular", path: "/sss" },
+        ])}
+      />
       <Navbar />
 
       <div className="relative">

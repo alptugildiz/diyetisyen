@@ -1,8 +1,18 @@
 import Link from "next/link";
+import Image from "next/image";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import JsonLd from "@/components/JsonLd";
 import { getPost, getPosts, getRelatedPosts } from "@/lib/api";
+import {
+  articleSchema,
+  breadcrumbSchema,
+  buildMetadata,
+  stripHtml,
+  truncate,
+} from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -19,6 +29,35 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+
+  let post;
+  try {
+    post = await getPost(slug);
+  } catch {
+    // Yazı yoksa sayfa zaten notFound() veriyor; burada nötr bir başlık dönüp
+    // metadata üretimini patlatmıyoruz.
+    return buildMetadata({
+      title: "Yazı bulunamadı",
+      description: "Aradığınız blog yazısı bulunamadı.",
+      path: `/blog/${slug}`,
+      noIndex: true,
+    });
+  }
+
+  return buildMetadata({
+    title: post.title,
+    description: truncate(post.excerpt || post.content, 155),
+    path: `/blog/${post.slug}`,
+    image: post.coverImage || undefined,
+    type: "article",
+    publishedTime: post.publishedAt,
+    modifiedTime: post.updatedAt ?? post.publishedAt,
+    tags: post.tags,
+  });
+}
+
 export default async function BlogDetailPage({ params }: Props) {
   const { slug } = await params;
 
@@ -33,16 +72,37 @@ export default async function BlogDetailPage({ params }: Props) {
 
   return (
     <>
+      <JsonLd
+        data={articleSchema({
+          title: post.title,
+          description: truncate(post.excerpt || post.content, 200),
+          slug: post.slug,
+          image: post.coverImage,
+          publishedAt: post.publishedAt,
+          updatedAt: post.updatedAt,
+          tags: post.tags,
+          wordCount: stripHtml(post.content).split(/\s+/).filter(Boolean).length,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Ana Sayfa", path: "/" },
+          { name: "Blog", path: "/blog" },
+          { name: post.title, path: `/blog/${post.slug}` },
+        ])}
+      />
       <Navbar />
 
       {/* Cover image hero veya düz başlık alanı */}
       {post.coverImage ? (
         <div className="relative w-full h-72 md:h-96 mt-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={post.coverImage}
             alt={post.title}
-            className="w-full h-full object-cover"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-linear-to-t from-brand-bg/80 to-transparent" />
         </div>
@@ -133,8 +193,15 @@ export default async function BlogDetailPage({ params }: Props) {
                   className="group bg-brand-100 rounded-2xl overflow-hidden shadow-lg hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 flex flex-col"
                 >
                   {r.coverImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.coverImage} alt={r.title} className="w-full h-44 object-cover" />
+                    <div className="relative w-full h-44">
+                      <Image
+                        src={r.coverImage}
+                        alt={r.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                    </div>
                   ) : (
                     <div className="w-full h-44 bg-brand-200 flex items-center justify-center">
                       <span className="text-5xl">🥗</span>
