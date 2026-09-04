@@ -8,7 +8,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import { adminGetPost, adminCreatePost, adminUpdatePost, adminUploadImage } from "@/lib/api";
-import { Button, INPUT_CLS } from "@/components/admin/ui";
+import { Button, INPUT_CLS, useToast } from "@/components/admin/ui";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -33,6 +33,7 @@ export default function BlogEditorPage({ params }: Props) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,9 +125,13 @@ export default function BlogEditorPage({ params }: Props) {
       } else {
         await adminUpdatePost(id, data, token);
       }
+      toast.success(
+        status === "published" ? "Yazı yayınlandı." : "Taslak kaydedildi.",
+      );
       router.push("/admin/blog");
     } catch (err) {
       setError((err as Error).message);
+      toast.error((err as Error).message);
     } finally {
       setSaving(false);
     }

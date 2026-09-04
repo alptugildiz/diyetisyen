@@ -22,6 +22,7 @@ import {
   Modal,
   SkeletonRows,
   useConfirm,
+  useToast,
   type Column,
 } from "@/components/admin/ui";
 import type { Expense, ExpenseCategory } from "@/types";
@@ -44,6 +45,7 @@ export default function ExpensesTab({
   incomeTotal: number;
 }) {
   const confirm = useConfirm();
+  const toast = useToast();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -105,9 +107,12 @@ export default function ExpensesTab({
       if (editId) await adminUpdateExpense(editId, data, token);
       else await adminCreateExpense(data, token);
       setOpen(false);
+      toast.success(editId ? "Gider güncellendi." : "Gider kaydedildi.");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Kayıt başarısız.");
+      const message = err instanceof Error ? err.message : "Kayıt başarısız.";
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }

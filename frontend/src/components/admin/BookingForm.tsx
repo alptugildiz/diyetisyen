@@ -17,6 +17,7 @@ import {
   SelectInput,
 } from "@/components/admin/DateTimeInput";
 import PhoneInput from "@/components/admin/PhoneInput";
+import { useToast } from "@/components/admin/ui";
 import { isValidPhone } from "@/lib/phone";
 import type { Booking, BookingCancelReason, BookingStatus, Patient } from "@/types";
 
@@ -67,6 +68,7 @@ export default function BookingForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [conflict, setConflict] = useState<{ patientName: string } | null>(null);
+  const toast = useToast();
 
   const handleSave = async (force = false) => {
     if (!date) {
@@ -122,6 +124,7 @@ export default function BookingForm({
               .join(", ")} tarihleri dolu olduğu için atlandı.`,
           );
         }
+        toast.success(`${result.created.length} randevu oluşturuldu.`);
         onSaved(result.created[0]);
         return;
       }
@@ -137,6 +140,7 @@ export default function BookingForm({
       const saved = initial
         ? await adminUpdateBooking(initial._id, payload, token, force)
         : await adminCreateBooking(payload, token, force);
+      toast.success(initial ? "Randevu güncellendi." : "Randevu oluşturuldu.");
       onSaved(saved);
     } catch (err) {
       if (err instanceof ApiConflictError) {

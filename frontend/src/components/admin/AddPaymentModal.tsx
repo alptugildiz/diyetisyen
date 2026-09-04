@@ -6,7 +6,13 @@ import { formatTRY } from "@/lib/periods";
 import { todayISO } from "@/lib/date";
 import { PAYMENT_METHOD, PAYMENT_METHOD_OPTIONS } from "@/lib/paymentMethod";
 import { DateInput, SelectInput } from "@/components/admin/DateTimeInput";
-import { Button, Field, INPUT_CLS, Modal } from "@/components/admin/ui";
+import {
+  Button,
+  Field,
+  INPUT_CLS,
+  Modal,
+  useToast,
+} from "@/components/admin/ui";
 import type { PatientPackage, PaymentMethod } from "@/types";
 
 // Paket taksiti kaydeder. Randevu tahsilatı "İşle" akışından girilir;
@@ -35,6 +41,7 @@ export default function AddPaymentModal({
   const [documentNumber, setDocumentNumber] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const toast = useToast();
 
   useEffect(() => {
     if (!open) return;
@@ -75,9 +82,12 @@ export default function AddPaymentModal({
         },
         token,
       );
+      toast.success("Tahsilat kaydedildi.");
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Kayıt başarısız.");
+      const message = err instanceof Error ? err.message : "Kayıt başarısız.";
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }

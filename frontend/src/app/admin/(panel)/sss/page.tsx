@@ -16,6 +16,7 @@ import {
   INPUT_CLS,
   Modal,
   useConfirm,
+  useToast,
   type Column,
 } from "@/components/admin/ui";
 import type { Faq } from "@/types";
@@ -24,6 +25,7 @@ export default function AdminSSSPage() {
   const { data: session } = useSession();
   const token = (session as { backendToken?: string })?.backendToken ?? "";
   const confirm = useConfirm();
+  const toast = useToast();
 
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,9 +88,12 @@ export default function AdminSSSPage() {
         const created = await adminCreateFaq(data, token);
         setFaqs((prev) => [...prev, created]);
       }
+      toast.success(editId ? "Soru güncellendi." : "Soru eklendi.");
       resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Kayıt başarısız.");
+      const message = err instanceof Error ? err.message : "Kayıt başarısız.";
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
