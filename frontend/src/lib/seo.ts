@@ -176,6 +176,39 @@ export function breadcrumbSchema(items: { name: string; path: string }[]) {
   };
 }
 
+/**
+ * Hizmet sayfaları için Service şeması. provider, root layout'taki
+ * LocalBusiness düğümüne @id ile bağlanır; Google iki düğümü aynı
+ * işletmenin parçası olarak okur.
+ */
+export function serviceSchema({
+  name,
+  description,
+  path,
+}: {
+  name: string;
+  description: string;
+  path: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name,
+    description,
+    serviceType: name,
+    url: `${SITE.url}${path}`,
+    provider: { "@id": ID.business },
+    areaServed: [
+      { "@type": "City", name: "Lüleburgaz" },
+      { "@type": "AdministrativeArea", name: "Kırklareli" },
+    ],
+    availableChannel: {
+      "@type": "ServiceChannel",
+      serviceLocation: { "@id": ID.business },
+    },
+  };
+}
+
 export function faqPageSchema(faqs: { question: string; answer: string }[]) {
   return {
     "@context": "https://schema.org",

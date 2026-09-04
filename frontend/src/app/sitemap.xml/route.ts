@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { SERVICES } from "@/content/hizmetler";
 
 const BASE = "https://trakyadyt.com";
 
@@ -12,6 +13,13 @@ export const dynamic = "force-dynamic";
 const staticPages = [
   { url: BASE, priority: "1.0", changefreq: "weekly" },
   { url: `${BASE}/blog`, priority: "0.9", changefreq: "daily" },
+  { url: `${BASE}/hizmetler`, priority: "0.9", changefreq: "monthly" },
+  // Hizmet sayfaları yerel aramanın ana hedefi — blog yazılarından yüksek.
+  ...SERVICES.map((s) => ({
+    url: `${BASE}/hizmetler/${s.slug}`,
+    priority: "0.85",
+    changefreq: "monthly",
+  })),
   { url: `${BASE}/sss`, priority: "0.7", changefreq: "monthly" },
   { url: `${BASE}/hesaplamalar`, priority: "0.7", changefreq: "monthly" },
   { url: `${BASE}/araclar/kalori-hesaplayici`, priority: "0.6", changefreq: "monthly" },

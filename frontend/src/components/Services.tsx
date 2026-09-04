@@ -2,44 +2,17 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import { SERVICES } from "@/content/hizmetler";
 
-const services = [
-  {
-    emoji: "📉",
-    title: "Kilo Verme Danışmanlığı",
-    desc: "Yaşam tarzı ve hedefler doğrultusunda kişiye özel planlanan, kalıcı ve dengeli kilo kaybını destekleyen beslenme programları.",
-  },
-  {
-    emoji: "📈",
-    title: "Kilo Alma Danışmanlığı",
-    desc: "Sağlıklı ve kontrollü kilo artışını hedefleyen, vücudun enerji ve besin ihtiyacını gözeterek planlanan bireysel programlar.",
-  },
-  {
-    emoji: "🏃",
-    title: "Sporcu Beslenmesi",
-    desc: "Spor dalı ve antrenman yoğunluğuna göre planlanan; performansı destekleyen ve toparlanmayı hızlandıran beslenme yaklaşımları.",
-  },
-  {
-    emoji: "🩺",
-    title: "Hastalıklara Özel Beslenme",
-    desc: "Mevcut sağlık durumuna uygun, tedavi sürecini beslenme yoluyla destekleyen bilimsel ve kişiye özel danışmanlık.",
-  },
-  {
-    emoji: "🌿",
-    title: "Arınma ve Beslenme Düzenleme",
-    desc: "Vücudun doğal dengesini desteklemeye yönelik, kısa süreli ve kontrollü beslenme düzenlemeleri ve yaşam tarzı önerileri.",
-  },
-  {
-    emoji: "🤰",
-    title: "Gebelikte Beslenme",
-    desc: "Anne ve bebeğin sağlığını desteklemek amacıyla gebelik dönemine özel olarak planlanan dengeli ve güvenilir beslenme programları.",
-  },
-  {
-    emoji: "🤱",
-    title: "Emzirme Döneminde Beslenme",
-    desc: "Annenin artan besin ihtiyacını karşılamayı ve anne sütü kalitesini desteklemeyi amaçlayan kişiye özel beslenme planları.",
-  },
-];
+// Hizmet listesi tek kaynaktan: içerik dosyaları. Kart metniyle hizmet
+// sayfasındaki metnin ayrışması bu sayede mümkün değil.
+const services = SERVICES.map((s) => ({
+  emoji: s.emoji,
+  title: s.title,
+  desc: s.cardDescription,
+  href: `/hizmetler/${s.slug}`,
+}));
 
 export default function Services() {
   const [current, setCurrent] = useState(0);
@@ -122,7 +95,10 @@ export default function Services() {
                   className="shrink-0 px-3"
                   style={{ width: `${cardWidth}%` }}
                 >
-                  <div className="font-oswald bg-brand-50 border border-brand-400 rounded-2xl p-8 shadow-xl hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 h-full">
+                  <Link
+                    href={s.href}
+                    className="font-oswald block bg-brand-50 border border-brand-400 rounded-2xl p-8 shadow-xl hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 h-full"
+                  >
                     <div className="text-4xl mb-4">{s.emoji}</div>
                     <h3 className="font-bold text-brand-600 text-lg mb-2">
                       {s.title}
@@ -130,7 +106,10 @@ export default function Services() {
                     <p className="font-hind-vadodara text-brand-600 text-sm leading-relaxed">
                       {s.desc}
                     </p>
-                  </div>
+                    <span className="font-hind-vadodara mt-4 inline-block text-sm font-semibold text-brand-500">
+                      Ayrıntılar →
+                    </span>
+                  </Link>
                 </div>
               ))}
             </div>
