@@ -9,12 +9,22 @@ router.use(protect); // All admin post routes are protected
 
 const postSchema = z.object({
   title: z.string().min(1),
+  // Elle verilebilir; verilmezse başlıktan üretilir. Her hâlükârda
+  // slugify'dan geçer ki URL güvenli kalsın.
+  slug: z.string().min(1).optional(),
   excerpt: z.string().min(1).max(300),
   content: z.string().min(1),
   coverImage: z.string().optional(),
+  coverImageAlt: z.string().max(200).optional(),
+  // Sert sınırlar Google'ın kırpma eşiğinin (60/160) biraz üstünde;
+  // panelde sayaç 60/160'ta sarıya döner.
+  metaTitle: z.string().max(70).optional(),
+  metaDescription: z.string().max(200).optional(),
   tags: z.array(z.string()).optional(),
   status: z.enum(["draft", "published"]).optional(),
 });
+
+const toSlug = (value) => slugify(value, { lower: true, strict: true });
 
 // GET /api/admin/posts
 router.get("/", async (_req, res) => {
@@ -41,7 +51,7 @@ router.get("/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const data = postSchema.parse(req.body);
-    const slug = slugify(data.title, { lower: true, strict: true });
+    const slug = toSlug(data.slug || data.title);
     const publishedAt = data.status === "published" ? new Date() : undefined;
     const post = await Post.create({ ...data, slug, publishedAt });
     res.status(201).json(post);
@@ -60,8 +70,10 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const data = postSchema.partial().parse(req.body);
-    if (data.title)
-      data.slug = slugify(data.title, { lower: true, strict: true });
+    // Slug yalnızca açıkça gönderildiğinde değişir. Başlık düzenlenince
+    // otomatik yeniden üretilirse yayındaki yazının URL'i sessizce değişir
+    // ve o adrese verilmiş bağlantılar ile arama sıralaması kaybolur.
+    if (data.slug) data.slug = toSlug(data.slug);
     if (data.status === "published") data.publishedAt = data.publishedAt ?? new Date();
     const post = await Post.findByIdAndUpdate(req.params.id, data, {
       new: true,

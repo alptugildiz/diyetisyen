@@ -7,6 +7,10 @@ const postSchema = new mongoose.Schema(
     excerpt: { type: String, required: true, maxlength: 300 },
     content: { type: String, required: true },
     coverImage: { type: String, default: "" },
+    coverImageAlt: { type: String, default: "", trim: true },
+    // SEO alanları boşsa frontend title/excerpt'e düşer (bkz. lib/seo.ts).
+    metaTitle: { type: String, default: "", trim: true },
+    metaDescription: { type: String, default: "", trim: true },
     tags: [{ type: String, trim: true }],
     status: { type: String, enum: ["draft", "published"], default: "draft" },
     publishedAt: { type: Date },

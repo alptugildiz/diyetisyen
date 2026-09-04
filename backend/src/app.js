@@ -21,6 +21,7 @@ const adminPaymentRoutes = require("./routes/admin/payments");
 const adminRequestRoutes = require("./routes/admin/requests");
 const adminTodayRoutes = require("./routes/admin/today");
 const adminBadgeRoutes = require("./routes/admin/badges");
+const adminReceivableRoutes = require("./routes/admin/receivables");
 const appointmentRoutes = require("./routes/appointment");
 
 const app = express();
@@ -77,6 +78,7 @@ app.use("/api/admin/payments", adminPaymentRoutes);
 app.use("/api/admin/requests", adminRequestRoutes);
 app.use("/api/admin/today", adminTodayRoutes);
 app.use("/api/admin/badges", adminBadgeRoutes);
+app.use("/api/admin/receivables", adminReceivableRoutes);
 
 // 404
 app.use((_req, res) => res.status(404).json({ message: "Route not found" }));
