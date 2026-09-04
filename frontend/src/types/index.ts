@@ -214,6 +214,16 @@ export interface PaymentListResponse {
   count: number;
 }
 
+export interface ReceivableRow {
+  patient: Pick<Patient, "_id" | "firstName" | "lastName" | "phone">;
+  debt: number;
+}
+
+export interface ReceivablesResponse {
+  total: number;
+  rows: ReceivableRow[];
+}
+
 export interface PatientListResponse {
   patients: Patient[];
   total: number;

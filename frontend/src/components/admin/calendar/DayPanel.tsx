@@ -2,6 +2,7 @@
 
 import { STATUS } from "@/lib/bookingStatus";
 import { formatFullDate } from "@/lib/calendar";
+import { waLink, reminderText } from "@/lib/whatsapp";
 import { Button } from "@/components/admin/ui";
 import type { Booking } from "@/types";
 
@@ -32,7 +33,12 @@ export default function DayPanel({
         <p className="text-gray-400 text-sm">Bu güne randevu yok.</p>
       ) : (
         <div className="divide-y divide-gray-100">
-          {bookings.map((b) => (
+          {bookings.map((b) => {
+            const waHref = waLink(
+              b.patient.phone,
+              reminderText(b.patient.firstName, formatFullDate(dayIso), b.time),
+            );
+            return (
             <div
               key={b._id}
               className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 flex-wrap"
@@ -62,6 +68,17 @@ export default function DayPanel({
                     İşle
                   </Button>
                 )}
+                {waHref && (
+                  <a
+                    href={waHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="WhatsApp'tan hatırlat"
+                    className="text-emerald-600 hover:underline text-sm font-medium"
+                  >
+                    Hatırlat
+                  </a>
+                )}
                 <button
                   onClick={() => onEdit(b)}
                   className="text-brand-600 hover:underline text-sm font-medium"
@@ -76,7 +93,8 @@ export default function DayPanel({
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

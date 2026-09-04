@@ -18,6 +18,7 @@ import type {
   AppointmentRequest,
   RequestStatus,
   TodayResponse,
+  ReceivablesResponse,
 } from "@/types";
 
 // Server-side (SSR/SSG): Docker internal hostname
@@ -34,11 +35,26 @@ export class UnauthorizedError extends Error {
   }
 }
 
+/**
+ * 409 yanıtı gövdesiyle birlikte taşınır — çağıran taraf çakışmanın
+ * kimle olduğunu gösterip "yine de kaydet" sunabilsin.
+ */
+export class ApiConflictError extends Error {
+  body: unknown;
+  constructor(message: string, body: unknown) {
+    super(message);
+    this.name = "ApiConflictError";
+    this.body = body;
+  }
+}
+
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, options);
   if (!res.ok) {
     if (res.status === 401) throw new UnauthorizedError();
     const error = await res.json().catch(() => ({ message: "API error" }));
+    if (res.status === 409)
+      throw new ApiConflictError(error.message || "Çakışma", error);
     throw new Error(error.message || `HTTP ${res.status}`);
   }
   return res.json() as Promise<T>;
@@ -310,11 +326,41 @@ export function adminCreateBooking(
     note?: string;
   },
   token: string,
+  force = false,
 ) {
-  return adminFetch<Booking>("/api/admin/bookings", token, {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
+  return adminFetch<Booking>(
+    `/api/admin/bookings${force ? "?force=true" : ""}`,
+    token,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    },
+  );
+}
+
+export interface RecurringBookingResult {
+  created: Booking[];
+  skipped: { date: string; reason: string }[];
+}
+
+export function adminCreateRecurringBookings(
+  data: {
+    patient: string;
+    date: string;
+    time?: string;
+    note?: string;
+    repeatWeeks: number;
+  },
+  token: string,
+) {
+  return adminFetch<RecurringBookingResult>(
+    "/api/admin/bookings/recurring",
+    token,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    },
+  );
 }
 
 export function adminUpdateBooking(
@@ -328,11 +374,16 @@ export function adminUpdateBooking(
     note?: string;
   },
   token: string,
+  force = false,
 ) {
-  return adminFetch<Booking>(`/api/admin/bookings/${id}`, token, {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
+  return adminFetch<Booking>(
+    `/api/admin/bookings/${id}${force ? "?force=true" : ""}`,
+    token,
+    {
+      method: "PUT",
+      body: JSON.stringify(data),
+    },
+  );
 }
 
 export function adminDeleteBooking(id: string, token: string) {
@@ -546,4 +597,10 @@ export function adminGetToday(token: string, date?: string) {
 
 export function adminGetBadges(token: string) {
   return adminFetch<{ pendingRequests: number }>("/api/admin/badges", token);
+}
+
+// ─── Alacaklar ─────────────────────────────────────────────────
+
+export function adminGetReceivables(token: string) {
+  return adminFetch<ReceivablesResponse>("/api/admin/receivables", token);
 }

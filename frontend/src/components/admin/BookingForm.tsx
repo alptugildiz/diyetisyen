@@ -3,8 +3,10 @@
 import { useState } from "react";
 import {
   adminCreateBooking,
+  adminCreateRecurringBookings,
   adminUpdateBooking,
   adminCreatePatient,
+  ApiConflictError,
 } from "@/lib/api";
 import { STATUS, STATUS_OPTIONS } from "@/lib/bookingStatus";
 import { CANCEL_REASON, CANCEL_REASON_OPTIONS } from "@/lib/bookingCancelReason";
@@ -60,11 +62,13 @@ export default function BookingForm({
     initial?.cancelReason ?? "",
   );
   const [note, setNote] = useState(initial?.note ?? "");
+  const [repeatWeeks, setRepeatWeeks] = useState(1);
   const needsCancelReason = status === "iptal" || status === "gelmedi";
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [conflict, setConflict] = useState<{ patientName: string } | null>(null);
 
-  const handleSave = async () => {
+  const handleSave = async (force = false) => {
     if (!date) {
       setError("Tarih zorunludur.");
       return;
@@ -75,6 +79,7 @@ export default function BookingForm({
     }
     setSaving(true);
     setError("");
+    setConflict(null);
     try {
       let pid = patientId;
 
@@ -104,6 +109,23 @@ export default function BookingForm({
         return;
       }
 
+      // Seri randevu yalnızca yeni kayıtta anlamlı; düzenlemede tekrar yok.
+      if (!initial && repeatWeeks > 1) {
+        const result = await adminCreateRecurringBookings(
+          { patient: pid, date, time, note, repeatWeeks },
+          token,
+        );
+        if (result.skipped.length > 0) {
+          setError(
+            `${result.created.length} randevu oluşturuldu. ${result.skipped
+              .map((s) => s.date)
+              .join(", ")} tarihleri dolu olduğu için atlandı.`,
+          );
+        }
+        onSaved(result.created[0]);
+        return;
+      }
+
       const payload = {
         patient: pid,
         date,
@@ -113,10 +135,20 @@ export default function BookingForm({
         note,
       };
       const saved = initial
-        ? await adminUpdateBooking(initial._id, payload, token)
-        : await adminCreateBooking(payload, token);
+        ? await adminUpdateBooking(initial._id, payload, token, force)
+        : await adminCreateBooking(payload, token, force);
       onSaved(saved);
     } catch (err) {
+      if (err instanceof ApiConflictError) {
+        const body = err.body as {
+          conflict?: { patient?: { firstName: string; lastName: string } };
+        };
+        const p = body.conflict?.patient;
+        setConflict({
+          patientName: p ? `${p.firstName} ${p.lastName}` : "başka bir danışan",
+        });
+        return;
+      }
       setError(err instanceof Error ? err.message : "Kayıt başarısız.");
     } finally {
       setSaving(false);
@@ -244,6 +276,28 @@ export default function BookingForm({
         </div>
       )}
 
+      {!initial && (
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className={labelCls + " mb-0"}>Tekrar</label>
+            <span className="text-xs text-gray-400">
+              Aynı saatte haftalık seri
+            </span>
+          </div>
+          <SelectInput
+            value={String(repeatWeeks)}
+            onChange={(v) => setRepeatWeeks(Number(v))}
+            inputClassName={inputCls}
+            options={[
+              { value: "1", label: "Tekrar yok" },
+              { value: "4", label: "4 hafta" },
+              { value: "8", label: "8 hafta" },
+              { value: "12", label: "12 hafta" },
+            ]}
+          />
+        </div>
+      )}
+
       <div>
         <label className={labelCls}>Not</label>
         <textarea
@@ -254,11 +308,34 @@ export default function BookingForm({
         />
       </div>
 
+      {conflict && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-3">
+          <p className="text-sm text-amber-800">
+            Bu saatte <strong>{conflict.patientName}</strong> randevusu var.
+          </p>
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => handleSave(true)}
+              disabled={saving}
+              className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors"
+            >
+              Yine de kaydet
+            </button>
+            <button
+              onClick={() => setConflict(null)}
+              className="border border-amber-300 text-amber-800 font-semibold px-4 py-1.5 rounded-lg text-sm hover:bg-amber-100 transition-colors"
+            >
+              Saati değiştir
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       <div className="flex gap-3 justify-end">
         <button
-          onClick={handleSave}
+          onClick={() => handleSave()}
           disabled={saving}
           className="bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-xl text-sm transition-colors"
         >
