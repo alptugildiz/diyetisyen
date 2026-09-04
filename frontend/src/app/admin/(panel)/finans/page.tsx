@@ -6,19 +6,24 @@ import Link from "next/link";
 import { adminGetPayments, adminGetExpenses } from "@/lib/api";
 import { formatTRY } from "@/lib/periods";
 import { PAYMENT_METHOD } from "@/lib/paymentMethod";
+import { toCsv, downloadCsv, rangeFilename } from "@/lib/csv";
 import PeriodFilter, { type Range } from "@/components/admin/PeriodFilter";
 import ExpensesTab from "@/components/admin/finans/ExpensesTab";
 import PackagesTab from "@/components/admin/finans/PackagesTab";
+import ReceivablesTab from "@/components/admin/finans/ReceivablesTab";
+import FinanceSummary from "@/components/admin/finans/FinanceSummary";
 import {
+  Button,
   DataTable,
   EmptyState,
-  StatTile,
+  PageHeader,
+  SkeletonRows,
   Tabs,
   type Column,
 } from "@/components/admin/ui";
 import type { Payment } from "@/types";
 
-type Tab = "gelirler" | "giderler" | "paketler";
+type Tab = "gelirler" | "giderler" | "alacaklar" | "paketler";
 
 export default function AdminFinansPage() {
   const { data: session } = useSession();
@@ -98,34 +103,58 @@ export default function AdminFinansPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Finans</h1>
+      <PageHeader title="Finans" />
 
       <Tabs
         items={[
           { key: "gelirler", label: "Gelirler" },
           { key: "giderler", label: "Giderler" },
+          { key: "alacaklar", label: "Alacaklar" },
           { key: "paketler", label: "Paketler" },
         ]}
         active={tab}
         onChange={setTab}
       />
 
-      {tab !== "paketler" && <PeriodFilter onChange={setRange} />}
+      {(tab === "gelirler" || tab === "giderler") && (
+        <PeriodFilter onChange={setRange} />
+      )}
 
       {tab === "gelirler" && (
         <>
-          <div className="grid sm:grid-cols-3 gap-4 mb-6">
-            <StatTile
-              label="Toplam Tahsilat"
-              value={formatTRY(incomeTotal)}
-              accent
-            />
-            <StatTile label="Toplam Gider" value={formatTRY(expenseTotal)} />
-            <StatTile label="Net" value={formatTRY(incomeTotal - expenseTotal)} />
+          <FinanceSummary income={incomeTotal} expense={expenseTotal} />
+
+          <div className="flex justify-end mb-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={payments.length === 0}
+              onClick={() => {
+                const csv = toCsv(payments, [
+                  {
+                    header: "Danışan",
+                    value: (p) => `${p.patient.firstName} ${p.patient.lastName}`,
+                  },
+                  { header: "Kaynak", value: sourceLabel },
+                  { header: "Tutar", value: (p) => p.amount },
+                  {
+                    header: "Yöntem",
+                    value: (p) => PAYMENT_METHOD[p.method].label,
+                  },
+                  {
+                    header: "Tarih",
+                    value: (p) => new Date(p.date).toLocaleDateString("tr-TR"),
+                  },
+                ]);
+                downloadCsv(rangeFilename("gelirler", range), csv);
+              }}
+            >
+              Dışa aktar
+            </Button>
           </div>
 
           {loading ? (
-            <p className="text-gray-400">Yükleniyor…</p>
+            <SkeletonRows count={6} />
           ) : (
             <DataTable
               columns={paymentColumns}
@@ -142,7 +171,11 @@ export default function AdminFinansPage() {
         </>
       )}
 
-      {tab === "giderler" && <ExpensesTab token={token} range={range} />}
+      {tab === "giderler" && (
+        <ExpensesTab token={token} range={range} incomeTotal={incomeTotal} />
+      )}
+
+      {tab === "alacaklar" && <ReceivablesTab token={token} />}
 
       {tab === "paketler" && <PackagesTab token={token} />}
     </div>

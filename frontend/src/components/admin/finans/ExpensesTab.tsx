@@ -9,6 +9,8 @@ import {
 } from "@/lib/api";
 import { formatTRY } from "@/lib/periods";
 import { todayISO } from "@/lib/date";
+import { toCsv, downloadCsv, rangeFilename } from "@/lib/csv";
+import FinanceSummary from "./FinanceSummary";
 import { DateInput, SelectInput } from "@/components/admin/DateTimeInput";
 import type { Range } from "@/components/admin/PeriodFilter";
 import {
@@ -18,7 +20,7 @@ import {
   Field,
   INPUT_CLS,
   Modal,
-  StatTile,
+  SkeletonRows,
   useConfirm,
   type Column,
 } from "@/components/admin/ui";
@@ -34,9 +36,12 @@ const EXPENSE_CATEGORY: Record<ExpenseCategory, string> = {
 export default function ExpensesTab({
   token,
   range,
+  incomeTotal,
 }: {
   token: string;
   range: Range | null;
+  // Dönemin neti burada da görünsün diye üst ekrandan geliyor.
+  incomeTotal: number;
 }) {
   const confirm = useConfirm();
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -172,15 +177,33 @@ export default function ExpensesTab({
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="w-full max-w-xs">
-          <StatTile label="Toplam Gider" value={formatTRY(total)} />
-        </div>
+      <FinanceSummary income={incomeTotal} expense={total} />
+
+      <div className="flex items-center justify-end gap-3 mb-3">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={expenses.length === 0}
+          onClick={() => {
+            const csv = toCsv(expenses, [
+              { header: "Tür", value: (e) => EXPENSE_CATEGORY[e.category] },
+              { header: "Tutar", value: (e) => e.amount },
+              {
+                header: "Tarih",
+                value: (e) => new Date(e.date).toLocaleDateString("tr-TR"),
+              },
+              { header: "Not", value: (e) => e.note ?? "" },
+            ]);
+            downloadCsv(rangeFilename("giderler", range), csv);
+          }}
+        >
+          Dışa aktar
+        </Button>
         <Button onClick={openNew}>+ Gider Ekle</Button>
       </div>
 
       {loading ? (
-        <p className="text-gray-400">Yükleniyor…</p>
+        <SkeletonRows count={5} />
       ) : (
         <DataTable
           columns={columns}
