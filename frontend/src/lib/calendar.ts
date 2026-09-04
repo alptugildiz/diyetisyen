@@ -86,3 +86,71 @@ export function formatFullDate(iso: string): string {
 export function bookingDayKey(dateStr: string): string {
   return dateStr.slice(0, 10);
 }
+
+// ── Haftalık görünüm ────────────────────────────────────────────────────────
+
+/** ISO tarihe gün ekler. Saat dilimi kaymasını önlemek için UTC üzerinden. */
+export function addDaysISO(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Verilen günün içinde bulunduğu haftanın pazartesisi. */
+export function weekStartISO(iso: string): string {
+  const d = new Date(`${iso}T00:00:00.000Z`);
+  // getUTCDay: 0 = pazar. Pazartesi başlangıçlı haftaya çeviriyoruz.
+  const offset = (d.getUTCDay() + 6) % 7;
+  return addDaysISO(iso, -offset);
+}
+
+/** Pazartesiden pazara 7 hücre. */
+export function weekGrid(iso: string): DayCell[] {
+  const start = weekStartISO(iso);
+  const today = todayISO();
+  return Array.from({ length: 7 }, (_, i) => {
+    const cellIso = addDaysISO(start, i);
+    return {
+      iso: cellIso,
+      day: Number(cellIso.slice(8, 10)),
+      inMonth: true,
+      isToday: cellIso === today,
+    };
+  });
+}
+
+export function weekRange(iso: string): { from: string; to: string } {
+  const from = weekStartISO(iso);
+  return { from, to: addDaysISO(from, 6) };
+}
+
+// "8 – 14 Eylül 2026". Hafta iki aya yayılıyorsa ilk günde de ay yazılır.
+export function formatWeekTitle(iso: string): string {
+  const { from, to } = weekRange(iso);
+  const [fy, fm, fd] = from.split("-").map(Number);
+  const [ty, tm, td] = to.split("-").map(Number);
+  const left = fm === tm ? `${fd}` : `${fd} ${MONTHS[fm - 1]}`;
+  const right =
+    fy === ty
+      ? `${td} ${MONTHS[tm - 1]} ${ty}`
+      : `${td} ${MONTHS[tm - 1]} ${ty}`;
+  return `${left} – ${right}`;
+}
+
+/** Haftalık ızgaranın saat satırları: 08:00 – 20:00. */
+export const HOUR_SLOTS = Array.from(
+  { length: 13 },
+  (_, i) => `${String(i + 8).padStart(2, "0")}:00`,
+);
+
+/**
+ * Randevu saatini ızgara satırına oturtur. Klinik saatleri dışına taşan
+ * randevular en yakın uca çekilir — hiçbir randevu görünmez kalmasın.
+ */
+export function slotOf(time: string): string | null {
+  if (!time) return null;
+  const hour = Number(time.slice(0, 2));
+  if (Number.isNaN(hour)) return null;
+  const clamped = Math.min(Math.max(hour, 8), 20);
+  return `${String(clamped).padStart(2, "0")}:00`;
+}
