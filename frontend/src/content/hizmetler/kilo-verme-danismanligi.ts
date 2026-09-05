@@ -6,7 +6,7 @@ const content: ServiceContent = {
   emoji: "📉",
   cardDescription:
     "Yaşam tarzı ve hedefler doğrultusunda kişiye özel planlanan, kalıcı ve dengeli kilo kaybını destekleyen beslenme programları.",
-  metaTitle: "Lüleburgaz Kilo Verme Danışmanlığı | Diyetisyen Beyza Şule",
+  metaTitle: "Lüleburgaz Kilo Verme Danışmanlığı",
   metaDescription:
     "Lüleburgaz'da kişiye özel kilo verme danışmanlığı. Diyetisyen Beyza Şule Kahraman ile sürdürülebilir, aç bırakmayan beslenme programı. Randevu alın.",
   h1: "Lüleburgaz Kilo Verme Danışmanlığı",

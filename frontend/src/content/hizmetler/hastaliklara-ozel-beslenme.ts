@@ -6,7 +6,7 @@ const content: ServiceContent = {
   emoji: "🩺",
   cardDescription:
     "Mevcut sağlık durumuna uygun, tedavi sürecini beslenme yoluyla destekleyen bilimsel ve kişiye özel danışmanlık.",
-  metaTitle: "Lüleburgaz Hastalıklara Özel Beslenme | Diyetisyen Beyza",
+  metaTitle: "Lüleburgaz Hastalıklara Özel Beslenme",
   metaDescription:
     "Diyabet, insülin direnci, tiroid ve diğer durumlarda hekiminizin tedavisine eşlik eden beslenme planı. Lüleburgaz'da diyetisyen Beyza Şule Kahraman.",
   h1: "Lüleburgaz'da Hastalıklara Özel Beslenme Danışmanlığı",

@@ -6,7 +6,7 @@ const content: ServiceContent = {
   emoji: "🌿",
   cardDescription:
     "Vücudun doğal dengesini desteklemeye yönelik, kısa süreli ve kontrollü beslenme düzenlemeleri ve yaşam tarzı önerileri.",
-  metaTitle: "Lüleburgaz Beslenme Düzenleme | Dyt. Beyza Şule Kahraman",
+  metaTitle: "Lüleburgaz Beslenme Düzenleme ve Arınma",
   metaDescription:
     "Lüleburgaz'da kısa süreli beslenme düzenleme danışmanlığı. Bozulan öğün düzenini toparlayan, şeker ve işlenmiş gıda yükünü azaltan program. Randevu alın.",
   h1: "Lüleburgaz Arınma ve Beslenme Düzenleme Danışmanlığı",

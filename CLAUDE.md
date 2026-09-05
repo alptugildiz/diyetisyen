@@ -8,7 +8,7 @@ Dietitian website with Next.js frontend + Express backend + MongoDB. Turkish lan
 
 - **Frontend:** `frontend/` — Next.js 14 (App Router), TypeScript, Tailwind CSS, GSAP animations, NextAuth v5
 - **Backend:** `backend/` — Express, Mongoose, JWT auth, Zod validation
-- **Deploy:** Docker Compose with 4 services: mongo, backend, frontend, nginx
+- **Deploy:** Docker Compose with 4 services: mongo, backend, frontend, caddy
 
 ## Key Conventions
 
@@ -37,7 +37,7 @@ Dietitian website with Next.js frontend + Express backend + MongoDB. Turkish lan
 ### API URL Resolution
 
 - SSR (server components): `http://backend:5000` (Docker internal network)
-- Browser (client components): relative URLs like `/api/...` (nginx proxies to backend)
+- Browser (client components): relative URLs like `/api/...` (Caddy proxies to backend)
 - Never use `NEXT_PUBLIC_API_URL` — it's deprecated in this project
 
 ### Styling
@@ -91,4 +91,5 @@ These sections have static data in components instead of being fetched from the 
 - Tools page (`/araclar/`) has 3 client-side calculators — formulas documented in `docs/hesaplama-yontemleri.md`
 - Docker internal hostname for MongoDB: `mongo` (not `localhost`)
 - Docker internal hostname for backend: `backend` (not `localhost`)
-- `nginx/nginx.conf` routes: `/api/auth/*` → Next.js, `/api/*` → backend, everything else → frontend
+- `Caddyfile` routes: `/api/auth/*` → Next.js, `/api/*` → backend, everything else → frontend
+  (`nginx/nginx.conf` is a leftover from an earlier setup and is not used by docker-compose)

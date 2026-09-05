@@ -6,7 +6,7 @@ const content: ServiceContent = {
   emoji: "📈",
   cardDescription:
     "Sağlıklı ve kontrollü kilo artışını hedefleyen, vücudun enerji ve besin ihtiyacını gözeterek planlanan bireysel programlar.",
-  metaTitle: "Lüleburgaz Kilo Alma Danışmanlığı | Diyetisyen Beyza Şule",
+  metaTitle: "Lüleburgaz Kilo Alma Danışmanlığı",
   metaDescription:
     "Lüleburgaz'da sağlıklı kilo alma danışmanlığı. Diyetisyen Beyza Şule Kahraman ile kas ağırlıklı, kontrollü kilo artışı için kişiye özel plan. Randevu alın.",
   h1: "Lüleburgaz Kilo Alma Danışmanlığı",

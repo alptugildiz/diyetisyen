@@ -4,7 +4,7 @@ import { buildMetadata, breadcrumbSchema } from "@/lib/seo";
 import JsonLd from "@/components/JsonLd";
 
 export const metadata = buildMetadata({
-  title: "Hizmetler | Lüleburgaz Diyetisyen Beyza Şule Kahraman",
+  title: "Lüleburgaz Diyetisyen Hizmetleri",
   description:
     "Kilo verme, kilo alma, sporcu beslenmesi, hastalıklara özel beslenme, gebelik ve emzirme dönemi danışmanlığı. Lüleburgaz'da yüz yüze görüşme.",
   path: "/hizmetler",

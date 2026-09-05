@@ -6,7 +6,7 @@ const content: ServiceContent = {
   emoji: "🏃",
   cardDescription:
     "Spor dalı ve antrenman yoğunluğuna göre planlanan; performansı destekleyen ve toparlanmayı hızlandıran beslenme yaklaşımları.",
-  metaTitle: "Lüleburgaz Sporcu Beslenmesi | Diyetisyen Beyza Şule K.",
+  metaTitle: "Lüleburgaz Sporcu Beslenmesi",
   metaDescription:
     "Lüleburgaz'da sporcu beslenmesi danışmanlığı. Antrenman yoğunluğunuza göre performansı ve toparlanmayı destekleyen kişiye özel beslenme planı. Randevu alın.",
   h1: "Lüleburgaz Sporcu Beslenmesi Danışmanlığı",

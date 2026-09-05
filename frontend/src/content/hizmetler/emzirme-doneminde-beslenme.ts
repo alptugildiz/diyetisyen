@@ -6,7 +6,7 @@ const content: ServiceContent = {
   emoji: "🤱",
   cardDescription:
     "Annenin artan besin ihtiyacını karşılamayı ve anne sütü kalitesini desteklemeyi amaçlayan kişiye özel beslenme planları.",
-  metaTitle: "Lüleburgaz Emzirme Döneminde Beslenme | Dyt. Beyza Şule",
+  metaTitle: "Lüleburgaz Emzirme Döneminde Beslenme",
   metaDescription:
     "Lüleburgaz'da emziren anneler için beslenme danışmanlığı. Artan besin ihtiyacını karşılayan, anneyi aç bırakmayan kişiye özel program. Randevu oluşturun.",
   h1: "Lüleburgaz Emzirme Döneminde Beslenme Danışmanlığı",

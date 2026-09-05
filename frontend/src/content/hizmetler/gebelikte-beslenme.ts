@@ -6,7 +6,7 @@ const content: ServiceContent = {
   emoji: "🤰",
   cardDescription:
     "Anne ve bebeğin sağlığını desteklemek amacıyla gebelik dönemine özel olarak planlanan dengeli ve güvenilir beslenme programları.",
-  metaTitle: "Lüleburgaz Gebelikte Beslenme | Dyt. Beyza Şule Kahraman",
+  metaTitle: "Lüleburgaz Gebelikte Beslenme",
   metaDescription:
     "Lüleburgaz'da gebelikte beslenme danışmanlığı. Anne ve bebeğin ihtiyacını gözeten, trimestere göre planlanan güvenli beslenme programı. Randevu oluşturun.",
   h1: "Lüleburgaz Gebelikte Beslenme Danışmanlığı",
